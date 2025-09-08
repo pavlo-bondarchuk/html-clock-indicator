@@ -14,15 +14,23 @@
       </div>
       <h1 data-i18n="clockSettings">Clock Settings</h1>
       <div class="top-controls">
-        <select id="themeSelect">
-          <option value="system" data-i18n="themeSystem">System</option>
-          <option value="light" data-i18n="themeLight">Light</option>
-          <option value="dark" data-i18n="themeDark">Dark</option>
+        <select
+          id="themeSelect"
+          aria-label="Theme"
+          class="theme-icons"
+          data-theme-label="System"
+        >
+          <option value="system" data-i18n="themeSystem">🖥️</option>
+          <option value="light" data-i18n="themeLight">🌞</option>
+          <option value="dark" data-i18n="themeDark">🌙</option>
         </select>
-        <select id="langSelect">
-          <option value="en">English</option>
-          <option value="de">Deutsch</option>
-        </select>
+        <div class="select-icon-wrap">
+          <span class="icon" aria-hidden="true">🌐</span>
+          <select id="langSelect" aria-label="Language">
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </div>
       </div>
     </header>
 
@@ -429,7 +437,7 @@
       </section>
     </main>
 
-    <footer class="footer">© Millclock</footer>
+    <footer class="footer" id="footerBrand">© Millclock</footer>
     <script src="script.js"></script>
   </body>
 </html>

@@ -110,6 +110,7 @@ const el = {
   toast: $("#toast"),
   lang: $("#langSelect"),
   theme: $("#themeSelect"),
+  footerBrand: $("#footerBrand"),
 };
 
 async function init() {
@@ -117,6 +118,11 @@ async function init() {
   applySettingsToUI();
   applyTheme();
   updateBrightness();
+  // Dynamic year in footer
+  if (el.footerBrand) {
+    const year = new Date().getFullYear();
+    el.footerBrand.textContent = `© Millclock ${year}`;
+  }
   attachEvents();
   tick();
   el.nixie.dataset.ready = "true";
@@ -559,6 +565,14 @@ function applyTheme() {
 
   const hex = rgbToHex(settings.led.r, settings.led.g, settings.led.b);
   doc.style.setProperty("--led-color", hex);
+  if (el.theme) {
+    const map = {
+      system: translations.themeSystem || "System",
+      light: translations.themeLight || "Light",
+      dark: translations.themeDark || "Dark",
+    };
+    el.theme.setAttribute("data-theme-label", map[settings.theme]);
+  }
 }
 
 function updateBrightness() {

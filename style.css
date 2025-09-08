@@ -14,7 +14,6 @@
     --radius: 16px;
     --focus: 0 0 0 2px rgba(255, 102, 0, .4);
 
-    /* Light Theme Variables */
     --bg-0: #fdfdfd;
     --bg-1: #f5f5f5;
     --panel: #ffffff;
@@ -103,15 +102,46 @@ body {
     letter-spacing: .2px
 }
 
+@media (max-width:640px) {
+    .brand-name {
+        display: none;
+    }
+}
+
 .top-controls {
     justify-self: end;
     display: flex;
     gap: 10px;
 }
 
+.top-controls .select-icon-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.top-controls .theme-icons {
+    position: relative;
+}
+
+.top-controls .theme-icons[data-theme-label]:hover::after {
+    content: attr(data-theme-label);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 6px);
+    background: var(--panel, var(--bg-1));
+    color: var(--text);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 50;
+}
+
 .top-controls select {
-    /* appearance: none; */
-    /* background: transparent; */
     color: var(--text);
     border: 1px solid var(--border-color);
     border-radius: 999px;
@@ -153,7 +183,6 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow-x: auto;
 }
 
 .hint {
@@ -352,6 +381,21 @@ select:focus {
     margin-top: 8px
 }
 
+.block {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.block>.block-body {
+    flex: 1 1 auto;
+}
+
+.block .block-actions {
+    margin-top: auto;
+    padding-top: 12px;
+}
+
 .btn-row {
     display: flex;
     gap: 10px
@@ -446,6 +490,38 @@ select:focus {
     justify-content: center;
 }
 
+@media (max-width:640px) {
+    .nixie {
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: 320px;
+        gap: 10px 2px;
+    }
+
+    .nixie .tube {
+        flex: 0 0 calc(50% - 22px);
+        display: flex;
+        justify-content: center;
+    }
+
+    .nixie .separator {
+        flex-direction: row;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .nixie .separator .dot {
+        transform: none !important;
+    }
+
+    .nixie[data-show-seconds="true"] #secWrap {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+    }
+}
+
 .tube {
     background-image: var(--nixie-bg-image);
     background-size: contain;
@@ -466,11 +542,20 @@ select:focus {
 
 .sec-pair {
     display: none;
-    gap: 12px
+    gap: 12px;
 }
 
 .nixie[data-show-seconds="true"] .sec-pair {
-    display: flex
+    display: flex;
+}
+
+@media (max-width:640px) {
+    .nixie[data-show-seconds="true"] .sec-pair {
+        gap: 11px 2px;
+        justify-content: center;
+        width: 100%;
+        margin-top: 4px;
+    }
 }
 
 .digit {
@@ -491,13 +576,29 @@ select:focus {
     margin-bottom: -40px;
 }
 
+@media (max-width:640px) {
+    .nixie .separator {
+        height: 30px;
+        padding: 15px 0 0;
+    }
+
+    .nixie[data-show-seconds="true"] #secWrap {
+        display: flex;
+        justify-content: center;
+        margin-top: 4px;
+    }
+}
+
 .nixie[data-separator="static"] .separator .dot {
-    animation: none;
-    opacity: 1
+    opacity: 1;
 }
 
 .nixie[data-separator="off"] .separator {
-    opacity: .12
+    animation: none !important;
+}
+
+.nixie[data-separator="off"] .separator .dot {
+    opacity: 0;
 }
 
 .sep-sec {
@@ -518,10 +619,12 @@ select:focus {
 
 .footer {
     max-width: 1180px;
-    margin: 8px auto 24px;
-    padding: 0 16px;
+    margin: 32px auto 40px;
+    padding: 24px 16px;
     color: var(--muted);
-    font-size: 12px
+    font-size: 13px;
+    text-align: center;
+    opacity: .85;
 }
 
 select {
