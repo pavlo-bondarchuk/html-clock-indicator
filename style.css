@@ -804,6 +804,51 @@ select:focus {
     opacity: 0;
 }
 
+/* Animation modes */
+@keyframes nixie-gradient-shift {
+    0% {
+        filter: hue-rotate(0deg) brightness(var(--tube-brightness));
+    }
+
+    50% {
+        filter: hue-rotate(90deg) brightness(calc(var(--tube-brightness) * 1.1));
+    }
+
+    100% {
+        filter: hue-rotate(0deg) brightness(var(--tube-brightness));
+    }
+}
+
+@keyframes nixie-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .55;
+    }
+}
+
+/* Apply to digit wrappers */
+.nixie.anim-gradient .tube .digit {
+    animation: nixie-gradient-shift 6s linear infinite;
+}
+
+.nixie.anim-pulse .tube .digit {
+    animation: nixie-pulse 2.4s ease-in-out infinite;
+}
+
+.nixie.anim-off .tube .digit {
+    animation: none !important;
+}
+
+/* Slot mode handled in JS (random spin) just marks class for potential styling */
+.nixie.anim-slot .tube .digit {
+    transition: .1s;
+}
+
 .sep-sec {
     display: none
 }

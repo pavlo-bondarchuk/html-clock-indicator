@@ -36,6 +36,11 @@ const TRANSLATIONS = {
     brightness: "Brightness",
     underlightColor: "Under-light color",
     animation: "Animation",
+    steady: "Steady",
+    gradient: "Gradient",
+    slotMachine: "Slot Machine",
+    pulse: "Pulse",
+    off: "Off",
     autoDim: "Auto-dim at night",
     autoDimHint: "Night Mode reduces brightness on schedule",
     revert: "Revert",
@@ -113,6 +118,11 @@ const TRANSLATIONS = {
     brightness: "Helligkeit",
     underlightColor: "Unterlichtfarbe",
     animation: "Animation",
+    steady: "Stabil",
+    gradient: "Farbverlauf",
+    slotMachine: "Slot Machine",
+    pulse: "Puls",
+    off: "Aus",
     autoDim: "Nachts dimmen",
     autoDimHint: "Nachtmodus reduziert Helligkeit zeitgesteuert",
     revert: "Rückgängig",
@@ -303,6 +313,7 @@ async function init() {
   }
   applyTheme();
   updateBrightness();
+  applyAnimationMode();
   attachEvents();
   setupThemeToggle();
   syncSeparatorBlink();
@@ -466,6 +477,7 @@ function attachEvents() {
   el.animSelect.addEventListener("change", (e) => {
     settings.anim = e.target.value;
     save();
+    applyAnimationMode();
   });
   el.nightMode.addEventListener("change", (e) => {
     settings.nightMode = e.target.checked;
@@ -626,6 +638,7 @@ function applySettingsToUI() {
   if (el.nixie) {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;
+    el.nixie.dataset.anim = settings.anim;
   }
   el.timeInput.value = "";
   el.dateInput.value = "";
@@ -777,6 +790,84 @@ function tick() {
   if (el.nixie) {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;
+    el.nixie.dataset.anim = settings.anim;
+  }
+}
+
+// Animation modes implementation
+let slotTimer = 0;
+let slotPhase = 0;
+let slotActive = false;
+// Slot animation phases:
+// 0..X-4 : fast random spin
+// X-3 : show 5 9 (minutes about to hit 59)
+// X-2 : hold 5 9 briefly
+// X-1 : snap to 0 0
+// then restore real time on next tick
+const SLOT_TOTAL = 22;
+function runSlotStep() {
+  if (!slotActive) return;
+  const m1 = document.getElementById("m1");
+  const m2 = document.getElementById("m2");
+  const s1 = document.getElementById("s1");
+  const s2 = document.getElementById("s2");
+  const h1 = document.getElementById("h1");
+  const h2 = document.getElementById("h2");
+  const randDigit = () => Math.floor(Math.random() * 10);
+
+  if (slotPhase < SLOT_TOTAL - 3) {
+    // random spin all displayed digits
+    [h1, h2, m1, m2, s1, s2].forEach((el) => {
+      if (el) el.textContent = randDigit();
+    });
+  } else if (slotPhase === SLOT_TOTAL - 3) {
+    if (m1) m1.textContent = "5";
+    if (m2) m2.textContent = "9";
+    if (s1) s1.textContent = "5";
+    if (s2) s2.textContent = "9";
+  } else if (slotPhase === SLOT_TOTAL - 2) {
+    // keep 59 59
+  } else if (slotPhase === SLOT_TOTAL - 1) {
+    if (m1) m1.textContent = "0";
+    if (m2) m2.textContent = "0";
+    if (s1) s1.textContent = "0";
+    if (s2) s2.textContent = "0";
+  }
+
+  slotPhase++;
+  if (slotPhase < SLOT_TOTAL) {
+    const delay = slotPhase < SLOT_TOTAL - 4 ? 70 : 140; // slow a bit at end
+    setTimeout(runSlotStep, delay);
+  } else {
+    slotActive = false;
+  }
+}
+function maybeStartSlot() {
+  if (settings.anim !== "slot") return;
+  if (slotActive) return;
+  const intervalMin = settings.slotInterval || 30;
+  if (Date.now() - slotTimer > intervalMin * 60000) {
+    slotActive = true;
+    slotPhase = 0;
+    slotTimer = Date.now();
+    runSlotStep();
+  }
+}
+function applyAnimationMode() {
+  if (!el.nixie) return;
+  el.nixie.classList.remove(
+    "anim-gradient",
+    "anim-pulse",
+    "anim-off",
+    "anim-slot"
+  );
+  const mode = settings.anim;
+  if (mode === "gradient") el.nixie.classList.add("anim-gradient");
+  else if (mode === "pulse") el.nixie.classList.add("anim-pulse");
+  else if (mode === "off") el.nixie.classList.add("anim-off");
+  else if (mode === "slot") {
+    el.nixie.classList.add("anim-slot");
+    maybeStartSlot();
   }
 }
 
