@@ -13,6 +13,182 @@ function syncSeparatorBlink() {
   });
 }
 
+// Basic in-file translation dictionary fallback (can be replaced by external JSON fetch if added later)
+const TRANSLATIONS = {
+  en: {
+    clockSettings: "Clock Settings",
+    timeDate: "Time & Date",
+    timeDateSub: "Set format, timezone and automatic adjustments.",
+    timeFormat: "Time format",
+    leadingZero: "Leading Zero",
+    dateFormat: "Date format",
+    autoDateDisplay: "Auto date display",
+    showSeconds: "Show seconds",
+    timeZone: "Time zone",
+    dst: "Summer Time (DST)",
+    separatorBehavior: "Separator Behavior",
+    setTime: "Set Time",
+    setDate: "Set Date",
+    reset: "Reset",
+    apply: "Apply",
+    displayLighting: "Display & Lighting",
+    displayLightingSub: "Adjust brightness, colors, animations and effects.",
+    brightness: "Brightness",
+    underlightColor: "Under-light color",
+    animation: "Animation",
+    autoDim: "Auto-dim at night",
+    autoDimHint: "Night Mode reduces brightness on schedule",
+    revert: "Revert",
+    applyLighting: "Apply Lighting",
+    connectivity: "Connectivity",
+    connectivitySub: "Wi-Fi setup and Internet synchronization.",
+    wifiSSID: "Wi-Fi SSID",
+    wifiPass: "Wi-Fi Password",
+    inetTimeSync: "Internet time sync",
+    timeServer: "Time server (optional)",
+    test: "Test",
+    saveWifi: "Save Wi-Fi",
+    soundAlarms: "Sound & Alarms",
+    soundAlarmsSub: "Chimes, alarms and tones.",
+    hourlyChime: "Hourly chime",
+    alarmTime: "Alarm time",
+    days: "Days",
+    volume: "Volume",
+    testSound: "Test Sound",
+    saveAlarm: "Save Alarm",
+    modesSafety: "Modes & Safety",
+    modesSafetySub: "Protect your tubes and tailor the experience.",
+    slotMachineAntiPoisoning: "Slot Machine (anti-poisoning)",
+    slotInterval: "Slot interval (min)",
+    tempUnits: "Temperature units",
+    showTemp: "Show temperature",
+    defaults: "Defaults",
+    applyModes: "Apply Modes",
+    system: "System",
+    systemSub: "Firmware, device name and maintenance.",
+    deviceName: "Device name",
+    autoUpdates: "Auto updates",
+    firmware: "Firmware",
+    checkFw: "Check for updates",
+    eraseRestart: "Erase & Restart",
+    cancel: "Cancel",
+    saveAll: "Save All",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
+    // Toasts
+    toastApplied: "Applied",
+    toastReset: "Reset",
+    toastPingOk: "Ping ok",
+    toastWifiSaved: "Wi-Fi saved",
+    toastReverted: "Reverted",
+    toastLightingApplied: "Lighting applied",
+    toastAlarmSaved: "Alarm saved",
+    toastDefaults: "Defaults",
+    toastModesApplied: "Modes applied",
+    toastNoUpdates: "No updates",
+    toastErased: "Erased",
+    toastCanceled: "Canceled",
+    toastSaved: "Saved",
+    toastBeep: "Beep",
+  },
+  de: {
+    clockSettings: "Uhreinstellungen",
+    timeDate: "Zeit & Datum",
+    timeDateSub: "Format, Zeitzone und automatische Anpassungen.",
+    timeFormat: "Zeitformat",
+    leadingZero: "Führende Null",
+    dateFormat: "Datumsformat",
+    autoDateDisplay: "Automatische Datumsanzeige",
+    showSeconds: "Sekunden anzeigen",
+    timeZone: "Zeitzone",
+    dst: "Sommerzeit",
+    separatorBehavior: "Separator-Verhalten",
+    setTime: "Zeit einstellen",
+    setDate: "Datum einstellen",
+    reset: "Zurücksetzen",
+    apply: "Anwenden",
+    displayLighting: "Anzeige & Beleuchtung",
+    displayLightingSub: "Helligkeit, Farben und Effekte anpassen.",
+    brightness: "Helligkeit",
+    underlightColor: "Unterlichtfarbe",
+    animation: "Animation",
+    autoDim: "Nachts dimmen",
+    autoDimHint: "Nachtmodus reduziert Helligkeit zeitgesteuert",
+    revert: "Rückgängig",
+    applyLighting: "Beleuchtung anwenden",
+    connectivity: "Konnektivität",
+    connectivitySub: "Wi-Fi Setup und Internet-Synchronisation.",
+    wifiSSID: "Wi-Fi SSID",
+    wifiPass: "Wi-Fi Passwort",
+    inetTimeSync: "Internet Zeitsync",
+    timeServer: "Zeitserver (optional)",
+    test: "Testen",
+    saveWifi: "Wi-Fi speichern",
+    soundAlarms: "Sound & Alarme",
+    soundAlarmsSub: "Stundenschlag, Alarme und Töne.",
+    hourlyChime: "Stundenschlag",
+    alarmTime: "Alarmzeit",
+    days: "Tage",
+    volume: "Lautstärke",
+    testSound: "Sound testen",
+    saveAlarm: "Alarm speichern",
+    modesSafety: "Modi & Schutz",
+    modesSafetySub: "Schützt Röhren und passt Erlebnis an.",
+    slotMachineAntiPoisoning: "Slot Machine (Anti-Burn)",
+    slotInterval: "Slot Intervall (Min)",
+    tempUnits: "Temperatureinheiten",
+    showTemp: "Temperatur anzeigen",
+    defaults: "Standard",
+    applyModes: "Modi anwenden",
+    system: "System",
+    systemSub: "Firmware, Gerätename & Wartung.",
+    deviceName: "Gerätename",
+    autoUpdates: "Auto Updates",
+    firmware: "Firmware",
+    checkFw: "Auf Updates prüfen",
+    eraseRestart: "Löschen & Neustart",
+    cancel: "Abbrechen",
+    saveAll: "Alles speichern",
+    themeLight: "Hell",
+    themeDark: "Dunkel",
+    themeSystem: "System",
+    // Toasts
+    toastApplied: "Angewendet",
+    toastReset: "Zurückgesetzt",
+    toastPingOk: "Ping OK",
+    toastWifiSaved: "Wi-Fi gespeichert",
+    toastReverted: "Zurückgesetzt",
+    toastLightingApplied: "Beleuchtung angewendet",
+    toastAlarmSaved: "Alarm gespeichert",
+    toastDefaults: "Standard",
+    toastModesApplied: "Modi angewendet",
+    toastNoUpdates: "Keine Updates",
+    toastErased: "Gelöscht",
+    toastCanceled: "Abgebrochen",
+    toastSaved: "Gespeichert",
+    toastBeep: "Pieps",
+  },
+};
+
+async function loadTranslations(lang) {
+  translations = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  translatePage();
+}
+
+function translatePage() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (translations[key]) {
+      el.textContent = translations[key];
+    }
+  });
+  if (el.footerBrand) {
+    const year = new Date().getFullYear();
+    el.footerBrand.textContent = `© ${year} Millclock`;
+  }
+}
+
 const defaults = {
   lang: "en",
   theme: "system",
@@ -110,114 +286,58 @@ const el = {
   toast: $("#toast"),
   lang: $("#langSelect"),
   theme: $("#themeSelect"),
+  themeToggle: $("#themeToggle"),
   footerBrand: $("#footerBrand"),
 };
 
 async function init() {
-  await loadTranslations(settings.lang);
+  await loadTranslations(settings.lang || "en");
   applySettingsToUI();
+  // Normalize system to concrete light/dark for two-state toggle
+  if (settings.theme === "system") {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    settings.theme = prefersDark ? "dark" : "light";
+    save();
+  }
   applyTheme();
   updateBrightness();
-  // Dynamic year in footer
-  if (el.footerBrand) {
-    const year = new Date().getFullYear();
-    el.footerBrand.textContent = `© Millclock ${year}`;
-  }
   attachEvents();
+  setupThemeToggle();
+  syncSeparatorBlink();
   tick();
   el.nixie.dataset.ready = "true";
   setInterval(tick, 250);
 }
 
-async function loadTranslations(lang) {
-  try {
-    const response = await fetch(`locales/${lang}.json`);
-    translations = await response.json();
-    translatePage();
-  } catch (error) {
-    console.error(`Could not load translation file for ${lang}.`, error);
+function setupThemeToggle() {
+  function syncThemeToggleVisual() {
+    if (!el.theme) return;
+    el.theme.setAttribute("data-mode", settings.theme);
+    const labelMap = {
+      light: translations.themeLight || "Light",
+      dark: translations.themeDark || "Dark",
+    };
+    el.theme.setAttribute("data-label", labelMap[settings.theme]);
+    if (el.themeToggle)
+      el.themeToggle.setAttribute("aria-pressed", settings.theme === "dark");
   }
-}
-
-function translatePage() {
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    const key = element.getAttribute("data-i18n");
-    if (translations[key]) {
-      element.textContent = translations[key];
-    }
-  });
-}
-
-function tick() {
-  const now = new Date();
-  const shown = getDisplayDate(now);
-  syncSeparatorBlink();
-  renderTime(shown);
-  renderDate(shown);
-}
-
-function getDisplayDate(now) {
-  let base = new Date(now.getTime() + parseTz(settings.timezone) * 60000);
-  const dst =
-    settings.dstMode === "off" ? 0 : 60 * (settings.dstMode !== "off");
-  base = new Date(base.getTime() + dst * 60000);
-  if (
-    settings.manual &&
-    settings.manual.startReal &&
-    settings.manual.startClock
-  ) {
-    const diff = now.getTime() - settings.manual.startReal;
-    base = new Date(settings.manual.startClock + diff);
+  syncThemeToggleVisual();
+  if (el.themeToggle) {
+    el.themeToggle.addEventListener("click", () => {
+      settings.theme = settings.theme === "dark" ? "light" : "dark";
+      applyTheme();
+      syncThemeToggleVisual();
+      save();
+    });
+    el.themeToggle.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        el.themeToggle.click();
+      }
+    });
   }
-  return base;
-}
-
-function renderTime(d) {
-  const raw = d.getHours();
-  const m = d.getMinutes();
-  const s = d.getSeconds();
-  let h = raw;
-  if (!settings.is24h) {
-    h = h % 12;
-    if (h === 0) h = 12;
-  }
-  if (settings.leadingZero && h < 10) h = String(h).padStart(2, "0");
-  const hs = String(h);
-  const ms = String(m).padStart(2, "0");
-  const ss = String(s).padStart(2, "0");
-  const h1 = hs.length === 1 ? " " : hs[0];
-  const h2 = hs.length === 1 ? hs[0] : hs[1];
-  setDigit("h1", h1 === " " ? " " : h1);
-  setDigit("h2", h2);
-  // Hide the first hour tube if leadingZero is off and hour < 10
-  const h1Tube = document.getElementById("h1").closest(".tube");
-  if (!settings.leadingZero && h < 10 && h1Tube) {
-    h1Tube.style.visibility = "hidden";
-  } else if (h1Tube) {
-    h1Tube.style.visibility = "";
-  }
-  setDigit("m1", ms[0]);
-  setDigit("m2", ms[1]);
-  if (settings.showSeconds) {
-    setDigit("s1", ss[0]);
-    setDigit("s2", ss[1]);
-  } else {
-    setDigit("s1", "");
-    setDigit("s2", "");
-  }
-  el.nixie.dataset.separator = settings.separator;
-  el.nixie.dataset.showSeconds = settings.showSeconds ? "true" : "false";
-
-  let b = settings.brightness / 100;
-  const hr = d.getHours();
-  const isNight = settings.nightMode && (hr >= 22 || hr < 7);
-  if (
-    isNight &&
-    document.documentElement.getAttribute("data-theme") === "dark"
-  ) {
-    b = Math.max(0.18, b * 0.32);
-  }
-  document.documentElement.style.setProperty("--tube-brightness", String(b));
 }
 
 function renderDate(d) {
@@ -289,16 +409,6 @@ function attachEvents() {
     save();
     setTimeout(syncSeparatorBlink, 0);
   });
-  // Synchronize separator blink animation for all .separator .dot
-  function syncSeparatorBlink() {
-    // Animation duration in ms (should match CSS)
-    const duration = 1000;
-    const now = Date.now();
-    const offset = now % duration;
-    document.querySelectorAll(".separator .dot").forEach((dot) => {
-      dot.style.animationDelay = `-${offset}ms`;
-    });
-  }
   el.separatorBehavior.addEventListener("change", (e) => {
     settings.separator = e.target.value;
     save();
@@ -465,12 +575,6 @@ function attachEvents() {
     save();
   });
 
-  el.theme.addEventListener("change", (e) => {
-    settings.theme = e.target.value;
-    applyTheme();
-    save();
-  });
-
   window
     .matchMedia("(prefers-color-scheme: dark)")
     .addEventListener("change", (e) => {
@@ -511,7 +615,6 @@ function onManual() {
 
 function applySettingsToUI() {
   el.lang.value = settings.lang;
-  el.theme.value = settings.theme;
   el.is24hSelect.value = settings.is24h ? "true" : "false";
   el.dateFormat.value = settings.dateFormat;
   el.tzText.value = settings.timezone || "UTC+00:00";
@@ -520,6 +623,10 @@ function applySettingsToUI() {
   el.autoDateDisplay.checked = settings.autoDate;
   el.showSeconds.checked = settings.showSeconds;
   el.separatorBehavior.value = settings.separator;
+  if (el.nixie) {
+    el.nixie.dataset.separator = settings.separator;
+    el.nixie.dataset.showSeconds = settings.showSeconds;
+  }
   el.timeInput.value = "";
   el.dateInput.value = "";
   el.ssid.value = settings.wifi.ssid || "";
@@ -572,6 +679,104 @@ function applyTheme() {
       dark: translations.themeDark || "Dark",
     };
     el.theme.setAttribute("data-theme-label", map[settings.theme]);
+  }
+}
+
+function getDstOffsetMinutes(date, tzMinutes) {
+  // Returns DST offset (0 or 60) for supported modes.
+  if (settings.dstMode === "off") return 0;
+  const year = date.getUTCFullYear();
+  if (settings.dstMode === "eu") {
+    // EU: last Sunday March 01:00 UTC to last Sunday Oct 01:00 UTC
+    const lastSunday = (month) => {
+      const d = new Date(Date.UTC(year, month + 1, 0)); // last day of month
+      const day = d.getUTCDay();
+      d.setUTCDate(d.getUTCDate() - day); // back to Sunday
+      return d;
+    };
+    const start = lastSunday(2); // March
+    start.setUTCHours(1, 0, 0, 0);
+    const end = lastSunday(9); // October
+    end.setUTCHours(1, 0, 0, 0);
+    if (date >= start && date < end) return 60;
+    return 0;
+  }
+  if (settings.dstMode === "us") {
+    // US: second Sunday March 02:00 local to first Sunday Nov 02:00 local
+    const nthSunday = (month, n) => {
+      const d = new Date(Date.UTC(year, month, 1));
+      const add = (7 - d.getUTCDay()) % 7; // first Sunday offset
+      d.setUTCDate(1 + add + 7 * (n - 1));
+      return d;
+    };
+    const firstSunday = (month) => nthSunday(month, 1);
+    const secondSunday = (month) => nthSunday(month, 2);
+    const start = secondSunday(2); // March
+    // Convert 02:00 local to UTC: local = UTC + tzMinutes (+ possible DST not yet applied)
+    start.setUTCMinutes(start.getUTCMinutes() - tzMinutes + 120);
+    const end = firstSunday(10); // November
+    end.setUTCMinutes(end.getUTCMinutes() - (tzMinutes + 60) + 120); // during DST subtract extra 60
+    if (date >= start && date < end) return 60;
+    return 0;
+  }
+  return 0;
+}
+
+function computeClockDate() {
+  const tzMin = parseTz(settings.timezone || "UTC+00:00");
+  let baseUtc;
+  if (settings.manual) {
+    const elapsed = Date.now() - settings.manual.startReal;
+    baseUtc = settings.manual.startClock + elapsed;
+  } else {
+    baseUtc = Date.now();
+  }
+  const tempDate = new Date(baseUtc + tzMin * 60000);
+  const dstAdd = getDstOffsetMinutes(tempDate, tzMin);
+  return new Date(baseUtc + (tzMin + dstAdd) * 60000);
+}
+
+function renderTime(now) {
+  let hoursUtc = now.getUTCHours();
+  let minutes = now.getUTCMinutes();
+  let seconds = now.getUTCSeconds();
+  // We used UTC math already applied; treat as local display values
+  let displayHour = hoursUtc;
+  let isPM = false;
+  if (!settings.is24h) {
+    isPM = displayHour >= 12;
+    displayHour = displayHour % 12;
+    if (displayHour === 0) displayHour = 12;
+  }
+  const hStr = String(displayHour).padStart(2, "0");
+  const mStr = String(minutes).padStart(2, "0");
+  const sStr = String(seconds).padStart(2, "0");
+  if (!settings.leadingZero && displayHour < 10) {
+    setDigit("h1", "");
+    setDigit("h2", hStr.slice(-1));
+  } else {
+    setDigit("h1", hStr[0]);
+    setDigit("h2", hStr[1]);
+  }
+  setDigit("m1", mStr[0]);
+  setDigit("m2", mStr[1]);
+  if (settings.showSeconds) {
+    setDigit("s1", sStr[0]);
+    setDigit("s2", sStr[1]);
+  } else {
+    setDigit("s1", "");
+    setDigit("s2", "");
+  }
+}
+
+function tick() {
+  const now = computeClockDate();
+  renderTime(now);
+  renderDate(now);
+  // Update separator state attributes continuously (in case of change)
+  if (el.nixie) {
+    el.nixie.dataset.separator = settings.separator;
+    el.nixie.dataset.showSeconds = settings.showSeconds;
   }
 }
 

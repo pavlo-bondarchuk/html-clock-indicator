@@ -14,16 +14,56 @@
       </div>
       <h1 data-i18n="clockSettings">Clock Settings</h1>
       <div class="top-controls">
-        <select
+        <div
           id="themeSelect"
-          aria-label="Theme"
-          class="theme-icons"
-          data-theme-label="System"
+          class="theme-toggle"
+          data-mode="light"
+          data-label="Light"
         >
-          <option value="system" data-i18n="themeSystem">🖥️</option>
-          <option value="light" data-i18n="themeLight">🌞</option>
-          <option value="dark" data-i18n="themeDark">🌙</option>
-        </select>
+          <button
+            id="themeToggle"
+            type="button"
+            aria-label="Toggle theme"
+            aria-pressed="false"
+          >
+            <span class="icon sun" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1.5" x2="12" y2="4" />
+                <line x1="12" y1="20" x2="12" y2="22.5" />
+                <line x1="4" y1="12" x2="1.5" y2="12" />
+                <line x1="22.5" y1="12" x2="20" y2="12" />
+                <line x1="5" y1="5" x2="3.3" y2="3.3" />
+                <line x1="19" y1="19" x2="20.7" y2="20.7" />
+                <line x1="5" y1="19" x2="3.3" y2="20.7" />
+                <line x1="19" y1="5" x2="20.7" y2="3.3" />
+              </svg>
+            </span>
+            <span class="icon moon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M15.5 2.5a9 9 0 1 0 6 15.49A10 10 0 0 1 15.5 2.5Z" />
+              </svg>
+            </span>
+          </button>
+        </div>
         <div class="select-icon-wrap">
           <span class="icon" aria-hidden="true">🌐</span>
           <select id="langSelect" aria-label="Language">
