@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Millclock — Clock Settings</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-dot" aria-hidden="true"></div>
+        <div class="brand-name">Millclock</div>
+      </div>
+      <h1 data-i18n="clockSettings">Clock Settings</h1>
+      <div class="top-controls">
+        <select id="themeSelect">
+          <option value="system" data-i18n="themeSystem">System</option>
+          <option value="light" data-i18n="themeLight">Light</option>
+          <option value="dark" data-i18n="themeDark">Dark</option>
+        </select>
+        <select id="langSelect">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card card-clock">
+        <div
+          class="nixie"
+          id="nixie"
+          data-separator="blinking"
+          data-show-seconds="false"
+        >
+          <div class="tube"><div class="digit" id="h1"></div></div>
+          <div class="tube"><div class="digit" id="h2"></div></div>
+
+          <div class="separator" id="sep">
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+
+          <div class="tube"><div class="digit" id="m1"></div></div>
+          <div class="tube"><div class="digit" id="m2"></div></div>
+
+          <div class="separator sep-sec" id="sep2">
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+
+          <div id="secWrap" class="sec-pair">
+            <div class="tube tube-sec">
+              <div class="digit" id="s1"></div>
+            </div>
+            <div class="tube tube-sec">
+              <div class="digit" id="s2"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="nixie-date" class="nixie">
+          <div class="tube"><div class="digit" id="d1"></div></div>
+          <div class="tube"><div class="digit" id="d2"></div></div>
+          <div class="separator date-sep"><div class="dot"></div></div>
+          <div class="tube"><div class="digit" id="mo1"></div></div>
+          <div class="tube"><div class="digit" id="mo2"></div></div>
+          <div class="separator date-sep"><div class="dot"></div></div>
+          <div class="tube"><div class="digit" id="y1"></div></div>
+          <div class="tube"><div class="digit" id="y2"></div></div>
+          <div class="tube"><div class="digit" id="y3"></div></div>
+          <div class="tube"><div class="digit" id="y4"></div></div>
+        </div>
+      </section>
+
+      <section class="dash">
+        <article class="card block" id="blk-time">
+          <div class="block-header">
+            <h2 data-i18n="timeDate">Time & Date</h2>
+            <p class="sub" data-i18n="timeDateSub">
+              Set format, timezone and automatic adjustments.
+            </p>
+          </div>
+          <div class="block-body two">
+            <label class="field"
+              ><span data-i18n="timeFormat">Time format</span>
+              <select id="is24hSelect">
+                <option value="true" data-i18n="24hour">24-hour</option>
+                <option value="false" data-i18n="12hour">12-hour</option>
+              </select>
+            </label>
+            <label class="field"
+              ><span data-i18n="leadingZero">Leading Zero</span>
+              <div class="switch">
+                <input type="checkbox" id="leadingZero" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="dateFormat">Date format</span>
+              <select id="dateFormat">
+                <option value="DD-MM-YYYY" data-i18n="euDateFormat">
+                  DD.MM.YYYY (EU)
+                </option>
+                <option value="MM-DD-YYYY" data-i18n="usDateFormat">
+                  MM.DD.YYYY (US)
+                </option>
+              </select>
+            </label>
+            <label class="field"
+              ><span data-i18n="autoDateDisplay">Auto date display</span>
+              <div class="switch">
+                <input type="checkbox" id="autoDateDisplay" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field">
+              <span data-i18n="showSeconds">Show seconds</span>
+              <div class="switch">
+                <input type="checkbox" id="showSeconds" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="timeZone">Time zone</span>
+              <input id="tzText" type="text" placeholder="e.g. UTC+02:00" />
+            </label>
+            <label class="field"
+              ><span data-i18n="dst">Summer Time (DST)</span>
+              <select id="dstMode">
+                <option value="off" data-i18n="dstOff">Off</option>
+                <option value="eu" data-i18n="dstEu">European</option>
+                <option value="us" data-i18n="dstUs">American</option>
+              </select>
+            </label>
+            <label class="field"
+              ><span data-i18n="separatorBehavior">Separator Behavior</span>
+              <select id="separatorBehavior">
+                <option value="blinking" data-i18n="blinking">Blinking</option>
+                <option value="static" data-i18n="static">Static</option>
+                <option value="off" data-i18n="off">Off</option>
+              </select>
+            </label>
+            <div class="field">
+              <label
+                ><span data-i18n="setTime">Set Time</span>
+                <input type="time" id="timeInput"
+              /></label>
+            </div>
+            <div class="field">
+              <label
+                ><span data-i18n="setDate">Set Date</span>
+                <input type="date" id="dateInput"
+              /></label>
+            </div>
+          </div>
+          <div class="block-actions">
+            <button class="btn-ghost" id="tdReset" data-i18n="reset">
+              Reset
+            </button>
+            <button class="btn-primary" id="tdApply" data-i18n="apply">
+              Apply
+            </button>
+          </div>
+        </article>
+
+        <article class="card block" id="blk-light">
+          <div class="block-header">
+            <h2 data-i18n="displayLighting">Display & Lighting</h2>
+            <p class="sub" data-i18n="displayLightingSub">
+              Adjust brightness, colors, animations and effects.
+            </p>
+          </div>
+          <div class="block-body two">
+            <label class="field"
+              ><span data-i18n="brightness">Brightness</span>
+              <input
+                id="brightness"
+                type="range"
+                min="10"
+                max="100"
+                value="90"
+              />
+            </label>
+            <label class="field"
+              ><span data-i18n="underlightColor">Under-light color</span>
+              <div class="color-row">
+                <input id="underColor" type="color" value="#ff6600" />
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="animation">Animation</span>
+              <select id="animSelect">
+                <option value="steady" data-i18n="steady">Steady</option>
+                <option value="gradient" data-i18n="gradient">Gradient</option>
+                <option value="slot" data-i18n="slotMachine">
+                  Slot Machine
+                </option>
+                <option value="pulse" data-i18n="pulse">Pulse</option>
+                <option value="off" data-i18n="off">Off</option>
+              </select>
+            </label>
+            <label class="field"
+              ><span data-i18n="autoDim">Auto-dim at night</span>
+              <div class="switch">
+                <input type="checkbox" id="nightMode" /><span
+                  class="slider"
+                ></span>
+              </div>
+              <small class="hint" data-i18n="autoDimHint"
+                >Night Mode reduces brightness on schedule</small
+              >
+            </label>
+          </div>
+          <div class="block-actions">
+            <button class="btn-ghost" id="lightRevert" data-i18n="revert">
+              Revert
+            </button>
+            <button
+              class="btn-primary"
+              id="lightApply"
+              data-i18n="applyLighting"
+            >
+              Apply Lighting
+            </button>
+          </div>
+        </article>
+
+        <article class="card block" id="blk-net">
+          <div class="block-header">
+            <h2 data-i18n="connectivity">Connectivity</h2>
+            <p class="sub" data-i18n="connectivitySub">
+              Wi-Fi setup and Internet synchronization.
+            </p>
+          </div>
+          <div class="block-body two">
+            <label class="field"
+              ><span data-i18n="wifiSSID">Wi-Fi SSID</span>
+              <input id="ssid" type="text" placeholder="Your network name" />
+            </label>
+            <label class="field"
+              ><span data-i18n="wifiPass">Wi-Fi Password</span>
+              <div class="password">
+                <input id="wpass" type="password" placeholder="••••••••" />
+                <button type="button" id="passToggle" class="ghost">👁</button>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="inetTimeSync">Internet time sync</span>
+              <div class="switch">
+                <input type="checkbox" id="ntpEnable" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="timeServer">Time server (optional)</span>
+              <input id="ntpServer" type="text" placeholder="pool.ntp.org" />
+            </label>
+          </div>
+          <div class="block-actions">
+            <button class="btn-ghost" id="netTest" data-i18n="test">
+              Test
+            </button>
+            <button class="btn-primary" id="netSave" data-i18n="saveWifi">
+              Save Wi-Fi
+            </button>
+          </div>
+        </article>
+
+        <article class="card block" id="blk-alarm">
+          <div class="block-header">
+            <h2 data-i18n="soundAlarms">Sound & Alarms</h2>
+            <p class="sub" data-i18n="soundAlarmsSub">
+              Chimes, alarms and tones.
+            </p>
+          </div>
+          <div class="block-body two">
+            <label class="field"
+              ><span data-i18n="hourlyChime">Hourly chime</span>
+              <div class="switch">
+                <input type="checkbox" id="hourlyChime" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="alarmTime">Alarm time</span>
+              <input id="alarmTime" type="time" value="07:30" />
+            </label>
+            <label class="field"
+              ><span data-i18n="days">Days</span>
+              <select id="alarmDays">
+                <option value="monfri" data-i18n="monFri">Mon–Fri</option>
+                <option value="daily" data-i18n="daily">Daily</option>
+                <option value="weekends" data-i18n="weekends">Weekends</option>
+                <option value="off" data-i18n="off">Off</option>
+              </select>
+            </label>
+            <label class="field"
+              ><span data-i18n="volume">Volume</span>
+              <input id="volume" type="range" min="0" max="100" value="40" />
+            </label>
+          </div>
+          <div class="block-actions">
+            <button class="btn-ghost" id="soundTest" data-i18n="testSound">
+              Test Sound
+            </button>
+            <button class="btn-primary" id="alarmSave" data-i18n="saveAlarm">
+              Save Alarm
+            </button>
+          </div>
+        </article>
+
+        <article class="card block" id="blk-modes">
+          <div class="block-header">
+            <h2 data-i18n="modesSafety">Modes & Safety</h2>
+            <p class="sub" data-i18n="modesSafetySub">
+              Protect your tubes and tailor the experience.
+            </p>
+          </div>
+          <div class="block-body two">
+            <label class="field"
+              ><span data-i18n="slotMachineAntiPoisoning"
+                >Slot Machine (anti-poisoning)</span
+              >
+              <div class="switch">
+                <input type="checkbox" id="slotMachine" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="slotInterval">Slot interval (min)</span>
+              <input
+                id="slotInterval"
+                type="number"
+                min="1"
+                max="120"
+                value="30"
+              />
+            </label>
+            <label class="field"
+              ><span data-i18n="tempUnits">Temperature units</span>
+              <select id="units">
+                <option value="c">°C</option>
+                <option value="f">°F</option>
+              </select>
+            </label>
+            <label class="field"
+              ><span data-i18n="showTemp">Show temperature</span>
+              <div class="switch">
+                <input type="checkbox" id="showTemp" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+          </div>
+          <div class="block-actions">
+            <button class="btn-ghost" id="modesDefaults" data-i18n="defaults">
+              Defaults
+            </button>
+            <button class="btn-primary" id="modesApply" data-i18n="applyModes">
+              Apply Modes
+            </button>
+          </div>
+        </article>
+
+        <article class="card block" id="blk-system">
+          <div class="block-header">
+            <h2 data-i18n="system">System</h2>
+            <p class="sub" data-i18n="systemSub">
+              Firmware, device name and maintenance.
+            </p>
+          </div>
+          <div class="block-body two">
+            <label class="field"
+              ><span data-i18n="deviceName">Device name</span>
+              <input
+                id="deviceName"
+                type="text"
+                placeholder="ZIN-70-LivingRoom"
+              />
+            </label>
+            <label class="field"
+              ><span data-i18n="autoUpdates">Auto updates</span>
+              <div class="switch">
+                <input type="checkbox" id="autoUpdates" /><span
+                  class="slider"
+                ></span>
+              </div>
+            </label>
+            <label class="field"
+              ><span data-i18n="firmware">Firmware</span>
+              <input id="firmware" type="text" value="v1.0.0" readonly />
+            </label>
+            <div class="field">
+              <div class="btn-row">
+                <button class="btn-ghost" id="checkFw" data-i18n="checkFw">
+                  Check for updates
+                </button>
+                <button
+                  class="btn-ghost"
+                  id="factoryReset"
+                  data-i18n="eraseRestart"
+                >
+                  Erase & Restart
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="footer-actions">
+          <button class="btn-ghost" id="cancelAll" data-i18n="cancel">
+            Cancel
+          </button>
+          <button class="btn-primary" id="saveBtn" data-i18n="saveAll">
+            Save All
+          </button>
+          <span class="toast" id="toast"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">© Millclock</footer>
+    <script src="script.js"></script>
+  </body>
+</html>
