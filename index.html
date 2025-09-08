@@ -130,80 +130,88 @@
               Set format, timezone and automatic adjustments.
             </p>
           </div>
-          <div class="block-body two">
-            <label class="field"
-              ><span data-i18n="timeFormat">Time format</span>
-              <select id="is24hSelect">
-                <option value="true" data-i18n="24hour">24-hour</option>
-                <option value="false" data-i18n="12hour">12-hour</option>
-              </select>
-            </label>
-            <label class="field">
-              <span data-i18n="leadingZero">Leading Zero</span>
-              <div class="switch">
-                <input type="checkbox" id="leadingZero" /><span
-                  class="slider"
-                ></span>
+          <div class="block-body">
+            <div class="group" id="timeGroup">
+              <h3 class="group-title" data-i18n="timeSection">Time</h3>
+              <label class="field"
+                ><span data-i18n="timeFormat">Time format</span>
+                <select id="is24hSelect">
+                  <option value="true" data-i18n="24hour">24-hour</option>
+                  <option value="false" data-i18n="12hour">12-hour</option>
+                </select>
+              </label>
+              <label class="field" id="leadingZeroField">
+                <span data-i18n="leadingZero">Leading Zero</span>
+                <div class="switch">
+                  <input type="checkbox" id="leadingZero" /><span
+                    class="slider"
+                  ></span>
+                </div>
+              </label>
+              <label class="field">
+                <span data-i18n="showSeconds">Show seconds</span>
+                <div class="switch">
+                  <input type="checkbox" id="showSeconds" /><span
+                    class="slider"
+                  ></span>
+                </div>
+              </label>
+              <label class="field"
+                ><span data-i18n="timeZone">Time zone</span>
+                <input id="tzText" type="text" placeholder="e.g. UTC+02:00" />
+              </label>
+              <label class="field"
+                ><span data-i18n="dst">Summer Time (DST)</span>
+                <select id="dstMode">
+                  <option value="off" data-i18n="dstOff">Off</option>
+                  <option value="eu" data-i18n="dstEu">European</option>
+                  <option value="us" data-i18n="dstUs">American</option>
+                </select>
+              </label>
+              <label class="field"
+                ><span data-i18n="separatorBehavior">Separator Behavior</span>
+                <select id="separatorBehavior">
+                  <option value="blinking" data-i18n="blinking">
+                    Blinking
+                  </option>
+                  <option value="static" data-i18n="static">Static</option>
+                  <option value="off" data-i18n="off">Off</option>
+                </select>
+              </label>
+              <div class="field">
+                <label
+                  ><span data-i18n="setTime">Set Time</span>
+                  <input type="time" id="timeInput"
+                /></label>
               </div>
-            </label>
-            <label class="field"
-              ><span data-i18n="dateFormat">Date format</span>
-              <select id="dateFormat">
-                <option value="DD-MM-YYYY" data-i18n="euDateFormat">
-                  DD.MM.YYYY (EU)
-                </option>
-                <option value="MM-DD-YYYY" data-i18n="usDateFormat">
-                  MM.DD.YYYY (US)
-                </option>
-              </select>
-            </label>
-            <label class="field"
-              ><span data-i18n="autoDateDisplay">Auto date display</span>
-              <div class="switch">
-                <input type="checkbox" id="autoDateDisplay" /><span
-                  class="slider"
-                ></span>
-              </div>
-            </label>
-            <label class="field">
-              <span data-i18n="showSeconds">Show seconds</span>
-              <div class="switch">
-                <input type="checkbox" id="showSeconds" /><span
-                  class="slider"
-                ></span>
-              </div>
-            </label>
-            <label class="field"
-              ><span data-i18n="timeZone">Time zone</span>
-              <input id="tzText" type="text" placeholder="e.g. UTC+02:00" />
-            </label>
-            <label class="field"
-              ><span data-i18n="dst">Summer Time (DST)</span>
-              <select id="dstMode">
-                <option value="off" data-i18n="dstOff">Off</option>
-                <option value="eu" data-i18n="dstEu">European</option>
-                <option value="us" data-i18n="dstUs">American</option>
-              </select>
-            </label>
-            <label class="field"
-              ><span data-i18n="separatorBehavior">Separator Behavior</span>
-              <select id="separatorBehavior">
-                <option value="blinking" data-i18n="blinking">Blinking</option>
-                <option value="static" data-i18n="static">Static</option>
-                <option value="off" data-i18n="off">Off</option>
-              </select>
-            </label>
-            <div class="field">
-              <label
-                ><span data-i18n="setTime">Set Time</span>
-                <input type="time" id="timeInput"
-              /></label>
             </div>
-            <div class="field">
-              <label
-                ><span data-i18n="setDate">Set Date</span>
-                <input type="date" id="dateInput"
-              /></label>
+            <div class="group" id="dateGroup">
+              <h3 class="group-title" data-i18n="dateSection">Date</h3>
+              <label class="field"
+                ><span data-i18n="dateFormat">Date format</span>
+                <select id="dateFormat">
+                  <option value="DD-MM-YYYY" data-i18n="euDateFormat">
+                    DD.MM.YYYY (EU)
+                  </option>
+                  <option value="MM-DD-YYYY" data-i18n="usDateFormat">
+                    MM.DD.YYYY (US)
+                  </option>
+                </select>
+              </label>
+              <label class="field"
+                ><span data-i18n="autoDateDisplay">Auto date display</span>
+                <div class="switch">
+                  <input type="checkbox" id="autoDateDisplay" /><span
+                    class="slider"
+                  ></span>
+                </div>
+              </label>
+              <div class="field">
+                <label
+                  ><span data-i18n="setDate">Set Date</span>
+                  <input type="date" id="dateInput"
+                /></label>
+              </div>
             </div>
           </div>
           <div class="block-actions">
@@ -225,7 +233,7 @@
           </div>
           <div class="block-body two">
             <label class="field"
-              ><span data-i18n="brightness">Brightness</span>
+              ><span data-i18n="brightness">Tubes Brightness</span>
               <input
                 id="brightness"
                 type="range"
@@ -234,23 +242,15 @@
                 value="90"
               />
             </label>
-            <label class="field"
-              ><span data-i18n="underlightColor">Under-light color</span>
-              <div class="color-row">
-                <input id="underColor" type="color" value="#ff6600" />
-              </div>
-            </label>
-            <label class="field"
-              ><span data-i18n="animation">Animation</span>
-              <select id="animSelect">
-                <option value="steady" data-i18n="steady">Steady</option>
-                <option value="gradient" data-i18n="gradient">Gradient</option>
-                <option value="slot" data-i18n="slotMachine">
-                  Slot Machine
-                </option>
-                <option value="pulse" data-i18n="pulse">Pulse</option>
-                <option value="off" data-i18n="off">Off</option>
-              </select>
+            <label class="field">
+              <span data-i18n="glowIntensity">Glow Intensity</span>
+              <input
+                id="glowIntensity"
+                type="range"
+                min="0"
+                max="100"
+                value="70"
+              />
             </label>
             <label class="field"
               ><span data-i18n="autoDim">Auto-dim at night</span>
@@ -475,6 +475,23 @@
           <span class="toast" id="toast"></span>
         </div>
       </section>
+
+      <button id="backToTop" aria-label="Back to top" title="Back to top">
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <polyline points="6 14 12 8 18 14"></polyline>
+        </svg>
+      </button>
     </main>
 
     <footer class="footer" id="footerBrand">© Millclock</footer>

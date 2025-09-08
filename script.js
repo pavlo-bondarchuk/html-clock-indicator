@@ -19,6 +19,8 @@ const TRANSLATIONS = {
     clockSettings: "Clock Settings",
     timeDate: "Time & Date",
     timeDateSub: "Set format, timezone and automatic adjustments.",
+    timeSection: "Time",
+    dateSection: "Date",
     timeFormat: "Time format",
     leadingZero: "Leading Zero",
     dateFormat: "Date format",
@@ -34,6 +36,7 @@ const TRANSLATIONS = {
     displayLighting: "Display & Lighting",
     displayLightingSub: "Adjust brightness, colors, animations and effects.",
     brightness: "Brightness",
+    glowIntensity: "Glow Intensity",
     underlightColor: "Under-light color",
     animation: "Animation",
     steady: "Steady",
@@ -101,6 +104,8 @@ const TRANSLATIONS = {
     clockSettings: "Uhreinstellungen",
     timeDate: "Zeit & Datum",
     timeDateSub: "Format, Zeitzone und automatische Anpassungen.",
+    timeSection: "Zeit",
+    dateSection: "Datum",
     timeFormat: "Zeitformat",
     leadingZero: "Führende Null",
     dateFormat: "Datumsformat",
@@ -116,6 +121,7 @@ const TRANSLATIONS = {
     displayLighting: "Anzeige & Beleuchtung",
     displayLightingSub: "Helligkeit, Farben und Effekte anpassen.",
     brightness: "Helligkeit",
+    glowIntensity: "Glühintensität",
     underlightColor: "Unterlichtfarbe",
     animation: "Animation",
     steady: "Stabil",
@@ -210,8 +216,9 @@ const defaults = {
   dstMode: "off",
   separator: "blinking",
   showSeconds: false,
-  led: { r: 255, g: 102, b: 0 },
+  led: { r: 255, g: 102, b: 0 }, // retained only if needed for other parts; color picking removed
   brightness: 90,
+  glowIntensity: 70,
   nightMode: false,
   wifi: { ssid: "", pass: "" },
   ntpEnable: true,
@@ -264,8 +271,7 @@ const el = {
   passToggle: $("#passToggle"),
   ntpEnable: $("#ntpEnable"),
   ntpServer: $("#ntpServer"),
-  underColor: $("#underColor"),
-  animSelect: $("#animSelect"),
+  glowIntensity: $("#glowIntensity"),
   nightMode: $("#nightMode"),
   brightness: $("#brightness"),
   hourlyChime: $("#hourlyChime"),
@@ -313,13 +319,36 @@ async function init() {
   }
   applyTheme();
   updateBrightness();
-  applyAnimationMode();
+  updateGlow();
+  // animation modes removed
   attachEvents();
   setupThemeToggle();
   syncSeparatorBlink();
   tick();
   el.nixie.dataset.ready = "true";
   setInterval(tick, 250);
+
+  // Back to top visibility handler
+  const topBtn = document.getElementById("backToTop");
+  if (topBtn) {
+    const revealY = () => {
+      // after the clock section height
+      const clock = document.querySelector(".card-clock");
+      const threshold = (clock?.offsetHeight || 400) + 80; // padding
+      return threshold;
+    };
+    const onScroll = () => {
+      if (window.scrollY > revealY()) topBtn.classList.add("show");
+      else topBtn.classList.remove("show");
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    topBtn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      // hide after a short delay to sync with scroll finish
+      setTimeout(() => topBtn.classList.remove("show"), 500);
+    });
+  }
 }
 
 function setupThemeToggle() {
@@ -393,6 +422,7 @@ function setDigit(id, val) {
 function attachEvents() {
   el.is24hSelect.addEventListener("change", (e) => {
     settings.is24h = e.target.value === "true";
+    document.body.setAttribute("data-12h", settings.is24h ? "false" : "true");
     save();
   });
   el.dateFormat.addEventListener("change", (e) => {
@@ -466,19 +496,17 @@ function attachEvents() {
   el.brightness.addEventListener("input", (e) => {
     settings.brightness = +e.target.value;
     updateBrightness();
+    updateSliderFill(e.target);
     save();
   });
-  el.underColor.addEventListener("input", (e) => {
-    const rgb = hexToRgb(e.target.value);
-    settings.led = rgb;
-    applyTheme();
-    save();
-  });
-  el.animSelect.addEventListener("change", (e) => {
-    settings.anim = e.target.value;
-    save();
-    applyAnimationMode();
-  });
+  if (el.glowIntensity) {
+    el.glowIntensity.addEventListener("input", (e) => {
+      settings.glowIntensity = +e.target.value;
+      updateGlow();
+      updateSliderFill(e.target);
+      save();
+    });
+  }
   el.nightMode.addEventListener("change", (e) => {
     settings.nightMode = e.target.checked;
     save();
@@ -628,6 +656,7 @@ function onManual() {
 function applySettingsToUI() {
   el.lang.value = settings.lang;
   el.is24hSelect.value = settings.is24h ? "true" : "false";
+  document.body.setAttribute("data-12h", settings.is24h ? "false" : "true");
   el.dateFormat.value = settings.dateFormat;
   el.tzText.value = settings.timezone || "UTC+00:00";
   el.dstMode.value = settings.dstMode;
@@ -638,7 +667,6 @@ function applySettingsToUI() {
   if (el.nixie) {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;
-    el.nixie.dataset.anim = settings.anim;
   }
   el.timeInput.value = "";
   el.dateInput.value = "";
@@ -646,12 +674,8 @@ function applySettingsToUI() {
   el.wpass.value = settings.wifi.pass || "";
   el.ntpEnable.checked = !!settings.ntpEnable;
   el.ntpServer.value = settings.ntpServer || "";
-  el.underColor.value = rgbToHex(
-    settings.led.r,
-    settings.led.g,
-    settings.led.b
-  );
-  el.animSelect.value = settings.anim;
+  if (el.glowIntensity) el.glowIntensity.value = settings.glowIntensity;
+  if (el.glowIntensity) updateSliderFill(el.glowIntensity);
   el.nightMode.checked = !!settings.nightMode;
   el.brightness.value = settings.brightness;
   updateSliderFill(el.brightness);
@@ -764,7 +788,11 @@ function renderTime(now) {
   const hStr = String(displayHour).padStart(2, "0");
   const mStr = String(minutes).padStart(2, "0");
   const sStr = String(seconds).padStart(2, "0");
-  if (!settings.leadingZero && displayHour < 10) {
+  const twelveMode = !settings.is24h;
+  document.body.setAttribute("data-12h", twelveMode ? "true" : "false");
+  const hideLeading = twelveMode && !settings.leadingZero && displayHour < 10;
+  if (hideLeading) {
+    // Show only second digit of hour
     setDigit("h1", "");
     setDigit("h2", hStr.slice(-1));
   } else {
@@ -790,99 +818,37 @@ function tick() {
   if (el.nixie) {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;
-    el.nixie.dataset.anim = settings.anim;
   }
 }
+// Removed legacy animation code.
 
-// Animation modes implementation
-let slotTimer = 0;
-let slotPhase = 0;
-let slotActive = false;
-// Slot animation phases:
-// 0..X-4 : fast random spin
-// X-3 : show 5 9 (minutes about to hit 59)
-// X-2 : hold 5 9 briefly
-// X-1 : snap to 0 0
-// then restore real time on next tick
-const SLOT_TOTAL = 22;
-function runSlotStep() {
-  if (!slotActive) return;
-  const m1 = document.getElementById("m1");
-  const m2 = document.getElementById("m2");
-  const s1 = document.getElementById("s1");
-  const s2 = document.getElementById("s2");
-  const h1 = document.getElementById("h1");
-  const h2 = document.getElementById("h2");
-  const randDigit = () => Math.floor(Math.random() * 10);
-
-  if (slotPhase < SLOT_TOTAL - 3) {
-    // random spin all displayed digits
-    [h1, h2, m1, m2, s1, s2].forEach((el) => {
-      if (el) el.textContent = randDigit();
-    });
-  } else if (slotPhase === SLOT_TOTAL - 3) {
-    if (m1) m1.textContent = "5";
-    if (m2) m2.textContent = "9";
-    if (s1) s1.textContent = "5";
-    if (s2) s2.textContent = "9";
-  } else if (slotPhase === SLOT_TOTAL - 2) {
-    // keep 59 59
-  } else if (slotPhase === SLOT_TOTAL - 1) {
-    if (m1) m1.textContent = "0";
-    if (m2) m2.textContent = "0";
-    if (s1) s1.textContent = "0";
-    if (s2) s2.textContent = "0";
-  }
-
-  slotPhase++;
-  if (slotPhase < SLOT_TOTAL) {
-    const delay = slotPhase < SLOT_TOTAL - 4 ? 70 : 140; // slow a bit at end
-    setTimeout(runSlotStep, delay);
-  } else {
-    slotActive = false;
-  }
-}
-function maybeStartSlot() {
-  if (settings.anim !== "slot") return;
-  if (slotActive) return;
-  const intervalMin = settings.slotInterval || 30;
-  if (Date.now() - slotTimer > intervalMin * 60000) {
-    slotActive = true;
-    slotPhase = 0;
-    slotTimer = Date.now();
-    runSlotStep();
-  }
-}
-function applyAnimationMode() {
-  if (!el.nixie) return;
-  el.nixie.classList.remove(
-    "anim-gradient",
-    "anim-pulse",
-    "anim-off",
-    "anim-slot"
+function updateGlow() {
+  const raw = Math.max(0, Math.min(100, settings.glowIntensity || 0)) / 100;
+  // Apply easing (quadratic) for stronger change near high end
+  const eased = Math.pow(raw, 1.4); // tweak exponent for perceptual spacing
+  document.documentElement.style.setProperty(
+    "--glow-intensity",
+    eased.toString()
   );
-  const mode = settings.anim;
-  if (mode === "gradient") el.nixie.classList.add("anim-gradient");
-  else if (mode === "pulse") el.nixie.classList.add("anim-pulse");
-  else if (mode === "off") el.nixie.classList.add("anim-off");
-  else if (mode === "slot") {
-    el.nixie.classList.add("anim-slot");
-    maybeStartSlot();
-  }
 }
 
 function updateBrightness() {
-  const b = Math.max(0.12, Math.min(2, settings.brightness / 100));
-  document.documentElement.style.setProperty("--tube-brightness", String(b));
-  updateSliderFill(el.brightness);
+  // brightness stored 10..100 -> scale to 0.1..1.0
+  const b = Math.max(10, Math.min(100, settings.brightness || 90));
+  const val = (b / 100).toFixed(2);
+  document.documentElement.style.setProperty("--tube-brightness", val);
+  if (el.brightness) updateSliderFill(el.brightness);
 }
 
+// Visually fill range slider track using background-size (expects CSS with background-image linear-gradient(var(--accent), var(--accent)))
 function updateSliderFill(slider) {
-  const min = slider.min || 0;
-  const max = slider.max || 100;
-  const val = slider.value;
-  const percentage = ((val - min) / (max - min)) * 100;
-  slider.style.backgroundSize = `${percentage}% 100%`;
+  if (!slider) return;
+  const min = slider.min ? parseFloat(slider.min) : 0;
+  const max = slider.max ? parseFloat(slider.max) : 100;
+  const val = parseFloat(slider.value);
+  if (isNaN(val) || isNaN(min) || isNaN(max) || max <= min) return;
+  const pct = ((val - min) / (max - min)) * 100;
+  slider.style.backgroundSize = pct + "% 100%";
 }
 
 function parseTz(t) {
