@@ -1,5 +1,11 @@
 const $ = (q) => document.querySelector(q);
 let settings = load();
+// Runtime, non-persistent state for debouncing chime/alarm triggers
+const runtime = {
+  lastChimeKey: null, // e.g., YYYY-M-D-H
+  lastAlarmKey: null, // e.g., YYYY-M-D-HH:MM
+  audioContext: null,
+};
 let translations = {};
 
 // Synchronize separator blink animation for all .separator .dot
@@ -327,6 +333,18 @@ async function init() {
   tick();
   el.nixie.dataset.ready = "true";
   setInterval(tick, 250);
+
+  // Prime audio on first user interaction to satisfy autoplay policies
+  const prepareAudio = () => {
+    try {
+      const ac = getAudioContext();
+      if (ac && ac.resume) ac.resume().catch(() => {});
+    } catch {}
+  };
+  window.addEventListener("pointerdown", prepareAudio, {
+    once: true,
+    passive: true,
+  });
 
   // Back to top visibility handler
   const topBtn = document.getElementById("backToTop");
@@ -819,6 +837,9 @@ function tick() {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;
   }
+  // Sound features
+  checkHourlyChime(now);
+  checkAlarm(now);
 }
 // Removed legacy animation code.
 
@@ -891,9 +912,26 @@ function flash(t) {
   }, 1200);
 }
 
+function getAudioContext() {
+  try {
+    if (!runtime.audioContext) {
+      runtime.audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+    }
+    return runtime.audioContext;
+  } catch {
+    return null;
+  }
+}
+
 function beep() {
   try {
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const ac = getAudioContext();
+    if (!ac) throw new Error("NoAudioContext");
+    if (ac.state === "suspended" && ac.resume) {
+      // Attempt to resume in case browser requires a gesture; may still fail silently
+      ac.resume().catch(() => {});
+    }
     const osc = ac.createOscillator();
     const g = ac.createGain();
     osc.type = "square";
@@ -910,6 +948,68 @@ function beep() {
   } catch (e) {
     flash(translations.toastBeep || "Beep");
   }
+}
+
+// Helper: multiple short beeps for alarms
+function beepBurst(times = 3, interval = 350) {
+  let count = 0;
+  const id = setInterval(() => {
+    beep();
+    count++;
+    if (count >= times) clearInterval(id);
+  }, Math.max(150, interval));
+  // Fire first immediately
+  beep();
+  count++;
+}
+
+function timePartsFromClock(now) {
+  // computeClockDate returns a Date whose UTC getters correspond to displayed local time
+  return {
+    y: now.getUTCFullYear(),
+    m: now.getUTCMonth() + 1, // 1-12
+    d: now.getUTCDate(),
+    dow: now.getUTCDay(), // 0-6, Sun=0
+    hh: now.getUTCHours(),
+    mm: now.getUTCMinutes(),
+    ss: now.getUTCSeconds(),
+  };
+}
+
+function checkHourlyChime(now) {
+  if (!settings.hourlyChime) return;
+  const t = timePartsFromClock(now);
+  // Allow a small tolerance window to avoid interval drift
+  if (!(t.mm === 0 && t.ss <= 3)) return;
+  const key = `${t.y}-${t.m}-${t.d}-${t.hh}`;
+  if (runtime.lastChimeKey === key) return; // already chimed this hour
+  runtime.lastChimeKey = key;
+  beep();
+}
+
+function checkAlarm(now) {
+  const mode = settings.alarmDays || "off";
+  if (mode === "off") return;
+  if (!settings.alarmTime || !/^\d{2}:\d{2}$/.test(settings.alarmTime)) return;
+  const t = timePartsFromClock(now);
+  // Day filter
+  const isWeekend = t.dow === 0 || t.dow === 6;
+  const passDay =
+    mode === "daily" ||
+    (mode === "monfri" && !isWeekend) ||
+    (mode === "weekends" && isWeekend);
+  if (!passDay) return;
+  const targetH = parseInt(settings.alarmTime.slice(0, 2), 10);
+  const targetM = parseInt(settings.alarmTime.slice(3, 5), 10);
+  // Allow a small tolerance window to avoid interval drift
+  if (!(t.hh === targetH && t.mm === targetM && t.ss <= 3)) return;
+  const key = `${t.y}-${t.m}-${t.d}-${String(targetH).padStart(
+    2,
+    "0"
+  )}:${String(targetM).padStart(2, "0")}`;
+  if (runtime.lastAlarmKey === key) return; // already fired for this minute
+  runtime.lastAlarmKey = key;
+  beepBurst(3, 350);
 }
 
 init();
