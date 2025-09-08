@@ -309,7 +309,7 @@ select:focus {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 12px
+    margin-bottom: 32px;
 }
 
 .block-header h2 {
@@ -546,7 +546,7 @@ select {
 }
 
 #nixie-date {
-    margin-top: 60px;
+    margin-top: 10px;
     display: none;
 }
 

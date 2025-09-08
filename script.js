@@ -2,6 +2,17 @@ const $ = (q) => document.querySelector(q);
 let settings = load();
 let translations = {};
 
+// Synchronize separator blink animation for all .separator .dot
+function syncSeparatorBlink() {
+  // Animation duration in ms (should match CSS)
+  const duration = 1000;
+  const now = Date.now();
+  const offset = now % duration;
+  document.querySelectorAll(".separator .dot").forEach((dot) => {
+    dot.style.animationDelay = `-${offset}ms`;
+  });
+}
+
 const defaults = {
   lang: "en",
   theme: "system",
@@ -134,6 +145,7 @@ function translatePage() {
 function tick() {
   const now = new Date();
   const shown = getDisplayDate(now);
+  syncSeparatorBlink();
   renderTime(shown);
   renderDate(shown);
 }
@@ -171,6 +183,13 @@ function renderTime(d) {
   const h2 = hs.length === 1 ? hs[0] : hs[1];
   setDigit("h1", h1 === " " ? " " : h1);
   setDigit("h2", h2);
+  // Hide the first hour tube if leadingZero is off and hour < 10
+  const h1Tube = document.getElementById("h1").closest(".tube");
+  if (!settings.leadingZero && h < 10 && h1Tube) {
+    h1Tube.style.visibility = "hidden";
+  } else if (h1Tube) {
+    h1Tube.style.visibility = "";
+  }
   setDigit("m1", ms[0]);
   setDigit("m2", ms[1]);
   if (settings.showSeconds) {
@@ -262,7 +281,18 @@ function attachEvents() {
   el.showSeconds.addEventListener("change", (e) => {
     settings.showSeconds = e.target.checked;
     save();
+    setTimeout(syncSeparatorBlink, 0);
   });
+  // Synchronize separator blink animation for all .separator .dot
+  function syncSeparatorBlink() {
+    // Animation duration in ms (should match CSS)
+    const duration = 1000;
+    const now = Date.now();
+    const offset = now % duration;
+    document.querySelectorAll(".separator .dot").forEach((dot) => {
+      dot.style.animationDelay = `-${offset}ms`;
+    });
+  }
   el.separatorBehavior.addEventListener("change", (e) => {
     settings.separator = e.target.value;
     save();
@@ -511,6 +541,7 @@ function applySettingsToUI() {
   el.deviceName.value = settings.deviceName;
   el.autoUpdates.checked = !!settings.autoUpdates;
   el.firmware.value = settings.firmware;
+  // Leading Zero is always visible and user-controlled
 }
 
 function applyTheme() {
