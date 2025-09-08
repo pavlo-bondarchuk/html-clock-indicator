@@ -110,8 +110,8 @@ body {
 }
 
 .top-controls select {
-    appearance: none;
-    background: var(--panel);
+    /* appearance: none; */
+    background: transparent;
     color: var(--text);
     border: 1px solid var(--border-color);
     border-radius: 999px;
