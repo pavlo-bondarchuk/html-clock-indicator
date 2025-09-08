@@ -261,7 +261,7 @@ input[type="number"],
 select {
     appearance: none;
     width: 100%;
-    background: var(--panel);
+    background-color: var(--panel);
     color: var(--text);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -525,10 +525,24 @@ select:focus {
 }
 
 select {
-    background-image: linear-gradient(45deg, transparent 50%, var(--select-arrow-color) 50%), linear-gradient(135deg, var(--select-arrow-color) 50%, transparent 50%), linear-gradient(var(--panel-2), var(--panel-2));
-    background-position: calc(100% - 18px) calc(50% - 4px), calc(100% - 12px) calc(50% - 4px), calc(100% - 22px) 50%;
-    background-size: 6px 6px, 6px 6px, 1px 60%;
-    background-repeat: no-repeat
+    padding-right: 30px;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--select-arrow-color) 50%),
+        linear-gradient(135deg, var(--select-arrow-color) 50%, transparent 50%);
+    background-position:
+        calc(100% - 20px) center,
+        calc(100% - 15px) center;
+    background-size:
+        5px 5px,
+        5px 5px;
+    background-repeat: no-repeat;
+}
+
+.top-controls select {
+    padding-right: 30px;
+    background-position:
+        calc(100% - 18px) center,
+        calc(100% - 13px) center;
 }
 
 #nixie-date {
