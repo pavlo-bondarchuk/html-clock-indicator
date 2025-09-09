@@ -1299,6 +1299,14 @@ function applyTheme() {
   doc.style.setProperty("--led-color", hex);
   // also set CSS variable for underlight color so glow CSS can use it
   doc.style.setProperty("--underlight-color", hex);
+  // swap header logo for theme: use logo_dark for light theme, logo_light for dark
+  try {
+    const logo = document.getElementById("brandLogo");
+    if (logo) {
+      if (theme === "dark") logo.src = "assets/logo_light.svg";
+      else logo.src = "assets/logo_dark.svg";
+    }
+  } catch (e) {}
   if (el.theme) {
     const map = {
       system: translations.themeSystem || "System",
