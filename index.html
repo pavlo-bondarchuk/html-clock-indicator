@@ -82,45 +82,91 @@
           data-separator="blinking"
           data-show-seconds="false"
         >
-          <div class="tube"><div class="digit" id="h1"></div></div>
-          <div class="tube"><div class="digit" id="h2"></div></div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="h1" src="assets/img/0.png" alt="hour1" />
+          </div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="h2" src="assets/img/0.png" alt="hour2" />
+          </div>
 
           <div class="separator" id="sep">
             <div class="dot"></div>
-            <div class="dot"></div>
           </div>
 
-          <div class="tube"><div class="digit" id="m1"></div></div>
-          <div class="tube"><div class="digit" id="m2"></div></div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="m1" src="assets/img/0.png" alt="min1" />
+          </div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="m2" src="assets/img/0.png" alt="min2" />
+          </div>
 
           <div class="separator sep-sec" id="sep2">
-            <div class="dot"></div>
             <div class="dot"></div>
           </div>
 
           <div id="secWrap" class="sec-pair">
-            <div class="tube tube-sec">
-              <div class="digit" id="s1"></div>
+            <div class="nixie-wrap">
+              <img
+                class="nixie-img"
+                id="s1"
+                src="assets/img/0.png"
+                alt="sec1"
+              />
             </div>
-            <div class="tube tube-sec">
-              <div class="digit" id="s2"></div>
+            <div class="nixie-wrap">
+              <img
+                class="nixie-img"
+                id="s2"
+                src="assets/img/0.png"
+                alt="sec2"
+              />
             </div>
           </div>
         </div>
 
         <div id="nixie-date" class="nixie">
-          <div class="tube"><div class="digit" id="d1"></div></div>
-          <div class="tube"><div class="digit" id="d2"></div></div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="d1" src="assets/img/0.png" alt="day1" />
+          </div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="d2" src="assets/img/0.png" alt="day2" />
+          </div>
           <div class="separator date-sep"><div class="dot"></div></div>
-          <div class="tube"><div class="digit" id="mo1"></div></div>
-          <div class="tube"><div class="digit" id="mo2"></div></div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="mo1" src="assets/img/0.png" alt="mon1" />
+          </div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="mo2" src="assets/img/0.png" alt="mon2" />
+          </div>
           <div class="separator date-sep"><div class="dot"></div></div>
-          <div class="tube"><div class="digit" id="y1"></div></div>
-          <div class="tube"><div class="digit" id="y2"></div></div>
-          <div class="tube"><div class="digit" id="y3"></div></div>
-          <div class="tube"><div class="digit" id="y4"></div></div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="y1" src="assets/img/0.png" alt="year1" />
+          </div>
+          <div class="nixie-wrap">
+            <img class="nixie-img" id="y2" src="assets/img/0.png" alt="year2" />
+          </div>
+          <div class="year-block">
+            <div class="nixie-wrap">
+              <img
+                class="nixie-img"
+                id="y3"
+                src="assets/img/0.png"
+                alt="year3"
+              />
+            </div>
+            <div class="nixie-wrap">
+              <img
+                class="nixie-img"
+                id="y4"
+                src="assets/img/0.png"
+                alt="year4"
+              />
+            </div>
+          </div>
         </div>
       </section>
+      <!-- temperature overlay shown temporarily above nixie display -->
+      <div id="tempOverlay" class="temp-overlay" aria-hidden="true"></div>
 
       <section class="dash">
         <article class="card block" id="blk-time">
@@ -158,7 +204,38 @@
               </label>
               <label class="field"
                 ><span data-i18n="timeZone">Time zone</span>
-                <input id="tzText" type="text" placeholder="e.g. UTC+02:00" />
+                <div style="display: flex; gap: 8px; align-items: center">
+                  <select id="tzSelect" aria-label="UTC zones">
+                    <!-- UTC offsets from -12 to +14 -->
+                    <option value="UTC-12:00">UTC-12:00</option>
+                    <option value="UTC-11:00">UTC-11:00</option>
+                    <option value="UTC-10:00">UTC-10:00</option>
+                    <option value="UTC-09:00">UTC-09:00</option>
+                    <option value="UTC-08:00">UTC-08:00</option>
+                    <option value="UTC-07:00">UTC-07:00</option>
+                    <option value="UTC-06:00">UTC-06:00</option>
+                    <option value="UTC-05:00">UTC-05:00</option>
+                    <option value="UTC-04:00">UTC-04:00</option>
+                    <option value="UTC-03:00">UTC-03:00</option>
+                    <option value="UTC-02:00">UTC-02:00</option>
+                    <option value="UTC-01:00">UTC-01:00</option>
+                    <option value="UTC+00:00">UTC+00:00</option>
+                    <option value="UTC+01:00">UTC+01:00</option>
+                    <option value="UTC+02:00">UTC+02:00</option>
+                    <option value="UTC+03:00">UTC+03:00</option>
+                    <option value="UTC+04:00">UTC+04:00</option>
+                    <option value="UTC+05:00">UTC+05:00</option>
+                    <option value="UTC+06:00">UTC+06:00</option>
+                    <option value="UTC+07:00">UTC+07:00</option>
+                    <option value="UTC+08:00">UTC+08:00</option>
+                    <option value="UTC+09:00">UTC+09:00</option>
+                    <option value="UTC+10:00">UTC+10:00</option>
+                    <option value="UTC+11:00">UTC+11:00</option>
+                    <option value="UTC+12:00">UTC+12:00</option>
+                    <option value="UTC+13:00">UTC+13:00</option>
+                    <option value="UTC+14:00">UTC+14:00</option>
+                  </select>
+                </div>
               </label>
               <label class="field"
                 ><span data-i18n="dst">Summer Time (DST)</span>
@@ -233,7 +310,7 @@
           </div>
           <div class="block-body two">
             <label class="field"
-              ><span data-i18n="brightness">Tubes Brightness</span>
+              ><span data-i18n="tubeBrightness">Tube Brightness</span>
               <input
                 id="brightness"
                 type="range"
@@ -243,7 +320,7 @@
               />
             </label>
             <label class="field">
-              <span data-i18n="glowIntensity">Glow Intensity</span>
+              <span data-i18n="tubeGlow">Tube Glow</span>
               <input
                 id="glowIntensity"
                 type="range"
@@ -251,6 +328,40 @@
                 max="100"
                 value="70"
               />
+            </label>
+            <label class="field">
+              <span data-i18n="tubeGlowColor">Tube Glow Color</span>
+              <input id="ledColor" type="color" value="#ff6600" />
+            </label>
+            <label class="field">
+              <span data-i18n="transition">Transition</span>
+              <select id="transitionSelect">
+                <option value="none">None</option>
+                <option value="smooth">Smooth</option>
+                <option value="fade">Fade</option>
+                <option value="slide">Slide</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="transitionSpeed">Transition Speed (ms)</span>
+              <input
+                id="transitionSpeed"
+                type="range"
+                min="50"
+                max="2000"
+                value="300"
+              />
+            </label>
+            <!-- placeholder to force a new row so night controls sit together -->
+            <div class="field" aria-hidden="true"></div>
+            <!-- Show temperature moved to Modes & Safety -->
+            <label class="field">
+              <span data-i18n="nightStart">Night start</span>
+              <input id="nightStart" type="time" value="23:00" />
+            </label>
+            <label class="field">
+              <span data-i18n="nightEnd">Night end</span>
+              <input id="nightEnd" type="time" value="07:00" />
             </label>
             <label class="field"
               ><span data-i18n="autoDim">Auto-dim at night</span>
@@ -336,6 +447,15 @@
                 ></span>
               </div>
             </label>
+            <label class="field">
+              <span data-i18n="hourlyMelody">Hourly melody</span>
+              <select id="hourlyMelody">
+                <option value="none">None</option>
+                <option value="beep">Beep</option>
+                <option value="chime1">Chime 1</option>
+                <option value="chime2">Chime 2</option>
+              </select>
+            </label>
             <label class="field"
               ><span data-i18n="alarmTime">Alarm time</span>
               <input id="alarmTime" type="time" value="07:30" />
@@ -347,6 +467,14 @@
                 <option value="daily" data-i18n="daily">Daily</option>
                 <option value="weekends" data-i18n="weekends">Weekends</option>
                 <option value="off" data-i18n="off">Off</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="alarmMelody">Alarm melody</span>
+              <select id="alarmMelody">
+                <option value="beep">Beep</option>
+                <option value="tone1">Tone 1</option>
+                <option value="tone2">Tone 2</option>
               </select>
             </label>
             <label class="field"
@@ -401,10 +529,18 @@
             </label>
             <label class="field"
               ><span data-i18n="showTemp">Show temperature</span>
-              <div class="switch">
-                <input type="checkbox" id="showTemp" /><span
-                  class="slider"
-                ></span>
+              <div style="display: flex; gap: 8px; align-items: center">
+                <div class="switch">
+                  <input type="checkbox" id="showTemp" /><span
+                    class="slider"
+                  ></span>
+                </div>
+                <input
+                  id="tempValue"
+                  type="number"
+                  value="22"
+                  style="width: 80px"
+                />
               </div>
             </label>
           </div>
@@ -498,3 +634,35 @@
     <script src="script.js"></script>
   </body>
 </html>
+
+<!-- Wheel picker overlay for iOS-like time scroller (used for time inputs) -->
+<div id="wheelPicker" class="wheel-picker" aria-hidden="true">
+  <div class="wheel-backdrop" data-action="cancel"></div>
+  <div
+    class="wheel-sheet"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Time picker"
+  >
+    <div class="wheel-header">
+      <button id="wheelCancel" type="button" class="btn-ghost">Cancel</button>
+      <div class="wheel-title">Set time</div>
+      <button id="wheelConfirm" type="button" class="btn-primary">Set</button>
+    </div>
+    <div class="wheel-body">
+      <div class="wheel-column" data-type="hours" aria-hidden="false">
+        <ul></ul>
+      </div>
+      <div class="wheel-sep">:</div>
+      <div class="wheel-column" data-type="minutes">
+        <ul></ul>
+      </div>
+      <div class="wheel-column wheel-ampm" data-type="ampm" aria-hidden="true">
+        <ul>
+          <li data-value="AM">AM</li>
+          <li data-value="PM">PM</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

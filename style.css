@@ -6,7 +6,7 @@
     border-radius: 12px;
     background: var(--panel, var(--bg-1));
     border: 1px solid var(--border-color);
-    display: flex;
+    align-self: stretch;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -68,35 +68,63 @@
     background: var(--panel, var(--bg-1));
     border: 1px solid var(--border-color);
     padding: 4px 8px;
-    font-size: 11px;
-    border-radius: 8px;
-    color: var(--text);
-    white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .2);
-    pointer-events: none;
-    z-index: 100;
 }
 
-.theme-select:focus-within,
-.theme-select:focus {
-    outline: none;
-    box-shadow: var(--focus);
+.nixie-wrap {
+    display: inline-block;
+    width: var(--nixie-img-width);
+    height: calc(var(--nixie-img-height) + 8px);
+    /* room for underlight */
+    margin: 0 2px;
+    position: relative;
+    opacity: var(--tube-opacity, 1);
+    transition: opacity .22s linear;
 }
 
-.theme-select.open {
-    border-color: var(--accent);
-}
-
-.theme-select__btn {
-    all: unset;
+.nixie-img {
     width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    line-height: 1;
-    cursor: pointer;
+    height: var(--nixie-img-height);
+    object-fit: contain;
+    display: block;
+    -webkit-box-reflect: below 0px linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.4));
+    transition: opacity var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease), transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
+}
+
+.nixie-wrap::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0px;
+    width: calc(var(--nixie-img-width) * 0.9);
+    height: calc(var(--nixie-img-height) * 0.18);
+    border-radius: 50%;
+    pointer-events: none;
+    /* gradient stop follows glow intensity: at 100% the color fills the disc */
+    background: radial-gradient(closest-side, var(--underlight-color, var(--led-color)) calc(var(--glow-intensity, 0) * 100%), transparent calc(var(--glow-intensity, 0) * 100%));
+    /* JS stores --glow-intensity as a 0..1 eased value; use it to drive blur and opacity */
+    filter: blur(calc(6px * var(--glow-intensity, 0)));
+    opacity: var(--glow-intensity, 0);
+}
+
+/* Transition variants controlled via data attribute on root */
+:root[data-transition="smooth"] .nixie-img {
+    transform-origin: 50% 50%;
+}
+
+:root[data-transition="fade"] .nixie-img {
+    transform: none;
+}
+
+:root[data-transition="slide"] .nixie-img {
+    transform: translateY(6px);
+}
+
+/* If a digit is intentionally blank (leading zero hidden), remove its underlight */
+.nixie-wrap.blank::after {
+    opacity: 0 !important;
+    filter: none !important;
+    pointer-events: none;
 }
 
 .theme-select__panel {
@@ -136,21 +164,18 @@
     height: 36px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    transition: opacity var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease), transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
+    transform: translateY(0) scale(1);
     font-size: 18px;
-    cursor: pointer;
-    position: relative;
-}
 
-.theme-opt:first-child {
-    border-bottom: 1px solid var(--border-color);
-}
+    /* Transition behavior notes:
+   JS will set inline transform values during swaps to create distinct
+   'smooth' (subtle scale), 'fade' (opacity only), and 'slide'
+   (translateY from below) effects. Keep transform-origin stable. */
+    .nixie-img {
+        transform-origin: 50% 50%;
+    }
 
-.theme-opt:not(:first-child) {
-    flex: 1;
-}
-
-.theme-opt:hover {
     background: var(--panel-2, var(--bg-1));
 }
 
@@ -213,6 +238,13 @@
     --accent-1: #ff7a00;
     --accent-2: #ff3d00;
     --led-color: #ff6600;
+    --underlight-color: #ff6600;
+    /* sizing variables for nixie images and separators */
+    --nixie-img-width: 60px;
+    --nixie-img-height: 100px;
+    --separator-width: 24px;
+    --separator-dot-size: 8px;
+    --separator-offset: 22px;
     --tube-brightness: .9;
     --radius: 16px;
     --focus: 0 0 0 2px rgba(255, 102, 0, .4);
@@ -234,6 +266,20 @@
     --range-track: #e0e0e0;
     --select-arrow-color: #888;
     --topbar-h: 72px;
+    /* clock card backgrounds (light/dark) */
+    --clock-bg-light: #f8f6f2;
+    --clock-text-light: #1a1a14;
+    --clock-bg-dark: #0a0802;
+    --clock-text-dark: #f5e8d6;
+    /* clock card backgrounds (light/dark) */
+    --clock-bg-light: #f8f6f2;
+    --clock-text-light: #1a1a14;
+    --clock-bg-dark: #0a0802;
+    --clock-text-dark: #f5e8d6;
+    /* transition for nixie digit changes */
+    --nixie-transition-duration: 300ms;
+    --nixie-transition-ease: cubic-bezier(.2, .9, .3, 1);
+    --tube-opacity: 1;
 }
 
 [data-theme="dark"] {
@@ -400,6 +446,72 @@ body {
     justify-content: center;
 }
 
+.temp-overlay {
+    position: absolute;
+    left: 50%;
+    top: 18px;
+    transform: translateX(-50%);
+    background: transparent;
+    color: var(--clock-text-light);
+    font-size: 22px;
+    font-weight: 700;
+    pointer-events: none;
+    text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+    opacity: 0;
+    transition: opacity .2s ease, transform .3s ease;
+    z-index: 40;
+}
+
+.temp-overlay.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Make the clock card match nixie lamp background */
+.card.card-clock {
+    background: var(--clock-bg-light);
+    border: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), inset 0 -6px 30px rgba(0, 0, 0, 0.04);
+    color: var(--clock-text-light);
+}
+
+:root[data-theme="dark"] .card.card-clock {
+    background: var(--clock-bg-dark);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 -6px 30px rgba(0, 0, 0, 0.6);
+    color: var(--clock-text-dark);
+}
+
+/* When temperature overlay is active, dim lamps and hide seconds/separators */
+#nixie[data-show-temp="true"] {
+    --tube-brightness: 0.25;
+    /* dim overall */
+}
+
+#nixie[data-show-temp="true"] .nixie-img {
+    /* dim most digits by default */
+    filter: brightness(0.45) saturate(0.8);
+}
+
+#nixie[data-show-temp="true"] .nixie-wrap::after {
+    opacity: 0.2 !important;
+    /* reduce underlight for non-seconds */
+    filter: blur(2px) !important;
+}
+
+/* Keep the seconds separator visible when showing temperature */
+
+/* Prevent dimming of the seconds pair: make them appear bright and keep underlight */
+#nixie[data-show-temp="true"] .sec-pair .nixie-img {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+#nixie[data-show-temp="true"] .sec-pair .nixie-wrap::after {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
 .hint {
     color: var(--muted);
     font-size: 12px;
@@ -513,6 +625,40 @@ select {
     outline: none
 }
 
+/* Improve vertical centering of native checkmark in the option popup.
+   Many browsers render the option list natively; this rule nudges
+   option line-height and padding so the native checkmark aligns
+   closer to the option text center on platforms that allow option styling. */
+select option {
+    /* provide a consistent clickable row height and center text */
+    padding: 8px 14px;
+    font-size: 14px;
+    line-height: 20px;
+    /* ~match the visual height so check appears centered */
+    vertical-align: middle;
+}
+
+/* Slightly increase select control vertical padding to match option rows
+   so the selected value visually aligns with items in the popup. */
+select {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* UTC select styling: use --accent for text, adapt to theme */
+#tzSelect {
+    border-radius: 12px;
+    padding: 12px 14px;
+    appearance: none;
+    border: 1px solid color-mix(in srgb, var(--accent) 8%, transparent);
+    background-color: var(--panel);
+    color: var(--accent);
+}
+
+#tzSelect:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
 input:focus,
 select:focus {
     box-shadow: var(--focus);
@@ -571,6 +717,13 @@ select:focus {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
+/* Visual lift: nudge the second-row controls in Display & Lighting up a bit
+   so they align with the left column group's rows like Time zone/DST/Separator */
+#blk-light .block-body>.field:nth-child(4),
+#blk-light .block-body>.field:nth-child(5) {
+    transform: translateY(-6px);
+}
+
 .block-body .group+.group {
     margin-top: 28px;
     padding-top: 16px;
@@ -627,10 +780,6 @@ select:focus {
 }
 
 #leadingZeroField {
-    display: none;
-}
-
-body[data-12h="true"] #leadingZeroField {
     display: flex;
 }
 
@@ -689,26 +838,62 @@ body[data-12h="true"] #leadingZeroField {
     padding: 0
 }
 
+/* Remove the default inner padding WebKit adds around the swatch so the
+   swatch fills the control square (affects Safari/Chrome on macOS/iOS). */
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0 !important;
+}
+
+/* Ensure the swatch itself doesn't add extra spacing */
+input[type="color"]::-webkit-color-swatch {
+    border-radius: 6px;
+    border: none;
+}
+
+/* Firefox shadow element (limited support) */
+input[type="color"]::-moz-color-swatch {
+    padding: 0;
+}
+
+/* Specific override for the under-light picker to be extra safe */
+#ledColor::-webkit-color-swatch-wrapper {
+    padding: 0 !important;
+}
+
+#ledColor::-webkit-color-swatch {
+    border-radius: 0;
+    border: none;
+}
+
+/* Remove any outer padding on the specific under-light color control */
+#ledColor {
+    padding: 0 !important;
+    box-sizing: border-box;
+}
+
 .muted {
     color: var(--muted);
     font-size: 12px
 }
 
 .separator {
-    width: 24px;
+    width: var(--separator-width);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 16px;
+    /* set separator height to image height minus offset so dot aligns with digit bottom */
+    height: calc(var(--nixie-img-height) - var(--separator-offset));
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .separator .dot {
-    width: 8px;
-    height: 8px;
+    width: var(--separator-dot-size);
+    height: var(--separator-dot-size);
     border-radius: 50%;
-    background: var(--led-color);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--led-color) 50%, transparent);
+    /* explicit warm yellow similar to nixie glow */
+    background: #ffcc33;
+    box-shadow: 0 0 14px rgba(255, 204, 51, 0.55), 0 0 24px rgba(255, 170, 0, 0.15);
     filter: brightness(var(--tube-brightness));
     transition: opacity 180ms linear, transform 180ms linear
 }
@@ -747,24 +932,6 @@ body[data-12h="true"] #leadingZeroField {
     box-shadow: none;
     align-items: center;
     justify-content: center;
-}
-
-.tube {
-    background-image: var(--nixie-bg-image);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 100px;
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: background-image .3s ease;
-}
-
-.tube-sec {
-    width: 120px;
 }
 
 .sec-pair {
@@ -813,11 +980,12 @@ body[data-12h="true"] #leadingZeroField {
 }
 
 :root {
-    --glow-intensity: .7;
+    --glow-intensity: 1;
+    /* TEMP: force full glow for visual test */
 }
 
 .nixie .digit {
-    filter: brightness(var(--tube-brightness)) drop-shadow(0 0 calc(2px + 38px * var(--glow-intensity)) var(--accent)) drop-shadow(0 0 calc(4px + 60px * var(--glow-intensity)) color-mix(in srgb, var(--accent) 55%, transparent));
+    filter: brightness(var(--tube-brightness)) drop-shadow(0 0 calc(2px + 46px * var(--glow-intensity)) var(--accent)) drop-shadow(0 0 calc(6px + 80px * var(--glow-intensity)) color-mix(in srgb, var(--accent) 65%, transparent));
     transition: filter .25s linear, text-shadow .25s linear;
 }
 
@@ -835,6 +1003,15 @@ body[data-12h="true"] #leadingZeroField {
     opacity: .85;
     font-weight: 600;
     letter-spacing: .3px
+}
+
+/* make date separators yellow like tube digits */
+.date-sep .dot {
+    width: var(--separator-dot-size);
+    height: var(--separator-dot-size);
+    border-radius: 50%;
+    background: #ffcc33;
+    box-shadow: 0 0 10px rgba(255, 204, 51, 0.5);
 }
 
 .footer {
@@ -964,19 +1141,25 @@ input[type="range"]::-moz-range-track {
 
 :root[data-theme="dark"] #timeInput::-webkit-calendar-picker-indicator,
 :root[data-theme="dark"] #dateInput::-webkit-calendar-picker-indicator,
-:root[data-theme="dark"] #alarmTime::-webkit-calendar-picker-indicator {
+:root[data-theme="dark"] #alarmTime::-webkit-calendar-picker-indicator,
+:root[data-theme="dark"] #nightStart::-webkit-calendar-picker-indicator,
+:root[data-theme="dark"] #nightEnd::-webkit-calendar-picker-indicator {
     filter: invert(1) brightness(1.2);
 }
 
 :root[data-theme="light"] #timeInput::-webkit-calendar-picker-indicator,
 :root[data-theme="light"] #dateInput::-webkit-calendar-picker-indicator,
-:root[data-theme="light"] #alarmTime::-webkit-calendar-picker-indicator {
+:root[data-theme="light"] #alarmTime::-webkit-calendar-picker-indicator,
+:root[data-theme="light"] #nightStart::-webkit-calendar-picker-indicator,
+:root[data-theme="light"] #nightEnd::-webkit-calendar-picker-indicator {
     filter: none;
 }
 
 #timeInput::-webkit-calendar-picker-indicator,
 #dateInput::-webkit-calendar-picker-indicator,
-#alarmTime::-webkit-calendar-picker-indicator {
+#alarmTime::-webkit-calendar-picker-indicator,
+#nightStart::-webkit-calendar-picker-indicator,
+#nightEnd::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: .85;
     transition: opacity .2s;
@@ -984,7 +1167,9 @@ input[type="range"]::-moz-range-track {
 
 #timeInput::-webkit-calendar-picker-indicator:hover,
 #dateInput::-webkit-calendar-picker-indicator:hover,
-#alarmTime::-webkit-calendar-picker-indicator:hover {
+#alarmTime::-webkit-calendar-picker-indicator:hover,
+#nightStart::-webkit-calendar-picker-indicator:hover,
+#nightEnd::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
 }
 
@@ -1040,10 +1225,32 @@ input[type="range"]::-moz-range-track {
         justify-content: center;
     }
 
+    /* Year block: keep year digits inline on desktop, but arrange as 2x2 grid on small screens */
+    .year-block {
+        display: inline-flex;
+        gap: 2px;
+    }
+
+    @media (max-width:640px) {
+        .year-block {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            width: calc(var(--nixie-img-width) * 2 + 8px);
+            justify-items: center;
+            margin-top: 6px;
+        }
+
+        .year-block .nixie-wrap {
+            width: calc(var(--nixie-img-width));
+        }
+    }
+
     .nixie .separator {
         flex-direction: row;
         width: 100%;
         gap: 10px;
+        justify-content: center;
     }
 
     .nixie .separator .dot {
@@ -1073,4 +1280,132 @@ input[type="range"]::-moz-range-track {
     .footer-actions {
         flex-direction: column;
     }
+}
+
+/* iOS-like wheel picker styles */
+.wheel-picker {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1200;
+}
+
+.wheel-picker.show {
+    display: flex;
+}
+
+.wheel-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.wheel-sheet {
+    width: 100%;
+    max-width: 720px;
+    background: var(--panel);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.3);
+    padding: 12px 12px 20px;
+    transform: translateY(0);
+}
+
+.wheel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.wheel-title {
+    font-weight: 700;
+}
+
+.wheel-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0 0;
+}
+
+.wheel-column {
+    width: 110px;
+    height: 180px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent 30%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wheel-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100%;
+}
+
+.wheel-column li {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    scroll-snap-align: center;
+    font-size: 20px;
+    color: var(--text);
+    padding: 4px 8px;
+}
+
+.wheel-sep {
+    font-size: 22px;
+    padding: 0 8px;
+    color: var(--muted);
+}
+
+.wheel-column ul::-webkit-scrollbar {
+    width: 6px;
+}
+
+.wheel-column ul::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: 6px;
+}
+
+.wheel-column li.selected {
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.wheel-picker .wheel-column::after {
+    content: "";
+    position: absolute;
+}
+
+.wheel-picker .wheel-column {
+    position: relative
+}
+
+.wheel-picker .wheel-column::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 36px;
+    top: calc(50% - 18px);
+    border-top: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--text) 4%, transparent);
+    pointer-events: none;
+}
+
+.wheel-ampm {
+    width: 70px;
 }

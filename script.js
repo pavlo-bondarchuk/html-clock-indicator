@@ -19,6 +19,259 @@ function syncSeparatorBlink() {
   });
 }
 
+// --- Wheel picker implementation (iOS-like scroller for time inputs) ---
+const wheel = {
+  el: document.getElementById("wheelPicker"),
+  body: null,
+  cols: {},
+  targetInput: null,
+  mode24: true,
+};
+
+function initWheelPicker() {
+  if (!wheel.el) return;
+  wheel.body = wheel.el.querySelector(".wheel-body");
+  wheel.cols.hours = wheel.el.querySelector(
+    '.wheel-column[data-type="hours"] ul'
+  );
+  wheel.cols.minutes = wheel.el.querySelector(
+    '.wheel-column[data-type="minutes"] ul'
+  );
+  wheel.cols.ampm = wheel.el.querySelector(
+    '.wheel-column[data-type="ampm"] ul'
+  );
+
+  // populate minutes and hours
+  populateWheel();
+
+  // wire buttons
+  document
+    .getElementById("wheelCancel")
+    .addEventListener("click", closeWheelPicker);
+  document
+    .getElementById("wheelConfirm")
+    .addEventListener("click", confirmWheelPicker);
+  wheel.el
+    .querySelector(".wheel-backdrop")
+    .addEventListener("click", closeWheelPicker);
+
+  // debounce snapping on scroll end
+  ["hours", "minutes", "ampm"].forEach((col) => {
+    const ul = wheel.cols[col];
+    if (!ul) return;
+    let tid = null;
+    ul.addEventListener(
+      "scroll",
+      () => {
+        if (tid) clearTimeout(tid);
+        tid = setTimeout(() => snapColumn(ul), 120);
+      },
+      { passive: true }
+    );
+  });
+}
+
+function populateWheel() {
+  // hours
+  const hUl = wheel.cols.hours;
+  const mUl = wheel.cols.minutes;
+  if (!hUl || !mUl) return;
+  hUl.innerHTML = "";
+  mUl.innerHTML = "";
+  // default to 24-hour hours but allow AM/PM column when needed
+  for (let h = 0; h < 24; h++) {
+    const li = document.createElement("li");
+    li.dataset.value = String(h).padStart(2, "0");
+    li.textContent = settings.is24h ? String(h).padStart(2, "0") : h % 12 || 12;
+    hUl.appendChild(li);
+  }
+  for (let m = 0; m < 60; m++) {
+    const li = document.createElement("li");
+    li.dataset.value = String(m).padStart(2, "0");
+    li.textContent = String(m).padStart(2, "0");
+    mUl.appendChild(li);
+  }
+}
+
+function openWheelPickerFor(inputEl, title) {
+  if (!wheel.el) return;
+  wheel.targetInput = inputEl;
+  wheel.el.querySelector(".wheel-title").textContent =
+    title || inputEl.getAttribute("aria-label") || "Set time";
+  // show or hide AM/PM column depending on settings
+  const ampmCol = wheel.el.querySelector(".wheel-ampm");
+  if (settings.is24h) {
+    ampmCol.style.display = "none";
+  } else {
+    ampmCol.style.display = "block";
+  }
+
+  // parse input value (HH:MM)
+  let hh = 0,
+    mm = 0;
+  if (inputEl && inputEl.value) {
+    const v = inputEl.value.split(":");
+    hh = parseInt(v[0] || "0", 10);
+    mm = parseInt(v[1] || "0", 10);
+  } else {
+    const now = new Date();
+    hh = now.getHours();
+    mm = now.getMinutes();
+  }
+
+  // scroll to values
+  scrollToValue(wheel.cols.hours, String(hh).padStart(2, "0"));
+  scrollToValue(wheel.cols.minutes, String(mm).padStart(2, "0"));
+  // AM/PM selection
+  if (wheel.cols.ampm) {
+    const ampm = hh >= 12 ? "PM" : "AM";
+    const node = Array.from(wheel.cols.ampm.children).find(
+      (n) => n.dataset.value === ampm
+    );
+    if (node)
+      node.parentElement.scrollTop =
+        node.offsetTop -
+        node.parentElement.clientHeight / 2 +
+        node.clientHeight / 2;
+  }
+
+  wheel.el.classList.add("show");
+  wheel.el.setAttribute("aria-hidden", "false");
+}
+
+function closeWheelPicker() {
+  if (!wheel.el) return;
+  wheel.el.classList.remove("show");
+  wheel.el.setAttribute("aria-hidden", "true");
+  wheel.targetInput = null;
+}
+
+function confirmWheelPicker() {
+  if (!wheel.targetInput) {
+    closeWheelPicker();
+    return;
+  }
+  const h = getSelectedValue(wheel.cols.hours) || "00";
+  const m = getSelectedValue(wheel.cols.minutes) || "00";
+  let hh = parseInt(h, 10);
+  if (!settings.is24h) {
+    const ampm = getSelectedValue(wheel.cols.ampm) || "AM";
+    if (ampm === "PM" && hh < 12) hh += 12;
+    if (ampm === "AM" && hh === 12) hh = 0;
+  }
+  const val = `${String(hh).padStart(2, "0")}:${String(
+    parseInt(m, 10)
+  ).padStart(2, "0")}`;
+  wheel.targetInput.value = val;
+  // trigger change handlers the same way regular input does
+  wheel.targetInput.dispatchEvent(new Event("change", { bubbles: true }));
+  closeWheelPicker();
+}
+
+function getSelectedValue(ul) {
+  if (!ul) return null;
+  // find li whose center is nearest the viewport center
+  const children = Array.from(ul.children);
+  const center = ul.scrollTop + ul.clientHeight / 2;
+  let best = null,
+    bestDiff = Infinity;
+  children.forEach((li) => {
+    const liCenter = li.offsetTop + li.clientHeight / 2;
+    const diff = Math.abs(liCenter - center);
+    if (diff < bestDiff) {
+      best = li;
+      bestDiff = diff;
+    }
+  });
+  return best ? best.dataset.value : null;
+}
+
+function snapColumn(ul) {
+  if (!ul) return;
+  const children = Array.from(ul.children);
+  const center = ul.scrollTop + ul.clientHeight / 2;
+  let best = null,
+    bestDiff = Infinity;
+  children.forEach((li) => {
+    const liCenter = li.offsetTop + li.clientHeight / 2;
+    const diff = Math.abs(liCenter - center);
+    if (diff < bestDiff) {
+      best = li;
+      bestDiff = diff;
+    }
+  });
+  if (best) {
+    ul.scrollTo({
+      top: best.offsetTop - ul.clientHeight / 2 + best.clientHeight / 2,
+      behavior: "smooth",
+    });
+    // mark selection
+    children.forEach((c) => c.classList.remove("selected"));
+    best.classList.add("selected");
+  }
+}
+
+function scrollToValue(ul, value) {
+  if (!ul) return;
+  const node = Array.from(ul.children).find((n) => n.dataset.value === value);
+  if (node)
+    ul.scrollTop = node.offsetTop - ul.clientHeight / 2 + node.clientHeight / 2;
+}
+
+// attach wheel to time-like inputs
+function wireWheelInputs() {
+  const timeInputs = ["timeInput", "nightStart", "nightEnd", "alarmTime"];
+  // Detect whether the current device/input modality is touch/mobile-like.
+  function isMobileLike() {
+    try {
+      if (typeof window === "undefined") return false;
+      // Prefer coarse pointer query when available
+      if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches)
+        return true;
+      // Touch capability fallbacks
+      if (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) return true;
+      if ("ontouchstart" in window) return true;
+      // Fallback to UA sniff for small/mobile devices
+      return /Mobi|Android|iP(hone|ad|od)/.test(navigator.userAgent || "");
+    } catch (e) {
+      return false;
+    }
+  }
+
+  const mobile = isMobileLike();
+  timeInputs.forEach((id) => {
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    if (mobile) {
+      // On mobile/touch devices, intercept focus/click and show the custom wheel
+      inp.addEventListener("focus", (e) => {
+        // prevent native picker on mobile by blurring
+        e.target.blur();
+        openWheelPickerFor(
+          e.target,
+          (e.target.previousElementSibling || {}).textContent || "Set time"
+        );
+      });
+      inp.addEventListener("click", (e) => {
+        e.preventDefault();
+        openWheelPickerFor(
+          e.target,
+          (e.target.previousElementSibling || {}).textContent || "Set time"
+        );
+      });
+    } else {
+      // Desktop: do not intercept. Let the browser show its native time picker.
+      // No handlers attached so focus/click behave normally.
+    }
+  });
+}
+
+// initialize wheel after DOM ready
+document.addEventListener("DOMContentLoaded", () => {
+  initWheelPicker();
+  wireWheelInputs();
+});
+
 // Basic in-file translation dictionary fallback (can be replaced by external JSON fetch if added later)
 const TRANSLATIONS = {
   en: {
@@ -43,6 +296,9 @@ const TRANSLATIONS = {
     displayLightingSub: "Adjust brightness, colors, animations and effects.",
     brightness: "Brightness",
     glowIntensity: "Glow Intensity",
+    tubeBrightness: "Tube Brightness",
+    tubeGlow: "Tube Glow",
+    tubeGlowColor: "Tube Glow Color",
     underlightColor: "Under-light color",
     animation: "Animation",
     steady: "Steady",
@@ -52,6 +308,8 @@ const TRANSLATIONS = {
     off: "Off",
     autoDim: "Auto-dim at night",
     autoDimHint: "Night Mode reduces brightness on schedule",
+    nightStart: "Night start",
+    nightEnd: "Night end",
     revert: "Revert",
     applyLighting: "Apply Lighting",
     connectivity: "Connectivity",
@@ -128,6 +386,9 @@ const TRANSLATIONS = {
     displayLightingSub: "Helligkeit, Farben und Effekte anpassen.",
     brightness: "Helligkeit",
     glowIntensity: "Glühintensität",
+    tubeBrightness: "Röhrenhelligkeit",
+    tubeGlow: "Röhren-Glow",
+    tubeGlowColor: "Röhren-Glow-Farbe",
     underlightColor: "Unterlichtfarbe",
     animation: "Animation",
     steady: "Stabil",
@@ -225,13 +486,19 @@ const defaults = {
   led: { r: 255, g: 102, b: 0 }, // retained only if needed for other parts; color picking removed
   brightness: 90,
   glowIntensity: 70,
+  transition: "smooth",
+  transitionSpeed: 300,
   nightMode: false,
+  nightStart: "23:00",
+  nightEnd: "07:00",
   wifi: { ssid: "", pass: "" },
   ntpEnable: true,
   ntpServer: "pool.ntp.org",
   anim: "steady",
   hourlyChime: false,
+  hourlyMelody: "chime1",
   alarmTime: "07:30",
+  alarmMelody: "beep",
   alarmDays: "monfri",
   volume: 40,
   slotMachine: true,
@@ -261,10 +528,15 @@ const el = {
   y2: $("#y2"),
   y3: $("#y3"),
   y4: $("#y4"),
+  ledColor: $("#ledColor"),
+  hourlyMelody: $("#hourlyMelody"),
+  alarmMelody: $("#alarmMelody"),
+  nightStart: $("#nightStart"),
+  nightEnd: $("#nightEnd"),
   nixieDate: $("#nixie-date"),
   is24hSelect: $("#is24hSelect"),
   dateFormat: $("#dateFormat"),
-  tzText: $("#tzText"),
+  tzSelect: $("#tzSelect"),
   dstMode: $("#dstMode"),
   separatorBehavior: $("#separatorBehavior"),
   leadingZero: $("#leadingZero"),
@@ -278,7 +550,10 @@ const el = {
   ntpEnable: $("#ntpEnable"),
   ntpServer: $("#ntpServer"),
   glowIntensity: $("#glowIntensity"),
+  transitionSelect: $("#transitionSelect"),
+  transitionSpeed: $("#transitionSpeed"),
   nightMode: $("#nightMode"),
+  tempValue: $("#tempValue"),
   brightness: $("#brightness"),
   hourlyChime: $("#hourlyChime"),
   alarmTime: $("#alarmTime"),
@@ -411,30 +686,118 @@ function renderDate(d) {
   const yr = String(d.getFullYear());
 
   if (settings.dateFormat === "DD-MM-YYYY") {
-    setDigit("d1", day[0]);
-    setDigit("d2", day[1]);
-    setDigit("mo1", mon[0]);
-    setDigit("mo2", mon[1]);
+    el.d1.src = `assets/img/${day[0]}.png`;
+    el.d2.src = `assets/img/${day[1]}.png`;
+    el.mo1.src = `assets/img/${mon[0]}.png`;
+    el.mo2.src = `assets/img/${mon[1]}.png`;
   } else {
     // MM-DD-YYYY
-    setDigit("d1", mon[0]);
-    setDigit("d2", mon[1]);
-    setDigit("mo1", day[0]);
-    setDigit("mo2", day[1]);
+    el.d1.src = `assets/img/${mon[0]}.png`;
+    el.d2.src = `assets/img/${mon[1]}.png`;
+    el.mo1.src = `assets/img/${day[0]}.png`;
+    el.mo2.src = `assets/img/${day[1]}.png`;
   }
-  setDigit("y1", yr[0]);
-  setDigit("y2", yr[1]);
-  setDigit("y3", yr[2]);
-  setDigit("y4", yr[3]);
+  el.y1.src = `assets/img/${yr[0]}.png`;
+  el.y2.src = `assets/img/${yr[1]}.png`;
+  el.y3.src = `assets/img/${yr[2]}.png`;
+  el.y4.src = `assets/img/${yr[3]}.png`;
 }
 
+// Helper: setDigit now targets image elements and shows/hides them
 function setDigit(id, val) {
-  const n = document.getElementById(id);
+  const n = el[id] || document.getElementById(id);
   if (!n) return;
-  const next = val == null ? "" : String(val).trim();
-  const same = n.textContent === next;
-  if (same) return;
-  n.textContent = next;
+  const wrap = n.closest ? n.closest(".nixie-wrap") : n.parentElement;
+
+  // blank case: hide and mark wrapper
+  if (val === "" || val == null) {
+    // cancel any pending swaps
+    if (n._swapTimer) {
+      clearTimeout(n._swapTimer);
+      n._swapTimer = null;
+    }
+    n.style.opacity = "0";
+    // after transition, remove src and mark blank
+    n._swapTimer = setTimeout(() => {
+      n.style.visibility = "hidden";
+      n.removeAttribute("src");
+      if (wrap) wrap.classList.add("blank");
+      n._swapTimer = null;
+    }, 220);
+    return;
+  }
+
+  // show value with crossfade: if same digit already shown, ensure visible
+  const ch = String(val).slice(-1);
+  const newSrc = `assets/img/${ch}.png`;
+  if (n.getAttribute("src") === newSrc) {
+    // already correct; ensure visible and clear blank
+    n.style.visibility = "visible";
+    n.style.opacity = "1";
+    if (wrap) wrap.classList.remove("blank");
+    return;
+  }
+
+  // Start transition variant per settings: smooth | fade | slide
+  const transitionMode =
+    document.documentElement.getAttribute("data-transition") ||
+    settings.transition ||
+    "smooth";
+  if (n._swapTimer) {
+    clearTimeout(n._swapTimer);
+    n._swapTimer = null;
+  }
+  // ensure visible while swapping
+  n.style.visibility = "visible";
+
+  if (transitionMode === "fade") {
+    // fade out -> swap -> fade in (no movement)
+    n.style.transform = "translateY(0) scale(1)";
+    n.style.opacity = "0";
+    n._swapTimer = setTimeout(() => {
+      n.src = newSrc;
+      void n.offsetWidth;
+      n.style.opacity = "1";
+      if (wrap) wrap.classList.remove("blank");
+      n._swapTimer = null;
+    }, Math.max(80, settings.transitionSpeed / 4));
+    return;
+  }
+
+  if (transitionMode === "slide") {
+    // slide up from below while fading in
+    // move current image down a bit and fade out, then swap and bring from below
+    n.style.transform = "translateY(6px) scale(0.98)";
+    n.style.opacity = "0";
+    const delay = Math.max(60, settings.transitionSpeed / 4);
+    n._swapTimer = setTimeout(() => {
+      n.src = newSrc;
+      // start slightly below and hidden, then animate into place
+      n.style.transform = "translateY(10px) scale(0.98)";
+      void n.offsetWidth;
+      // animate to neutral
+      requestAnimationFrame(() => {
+        n.style.transform = "translateY(0) scale(1)";
+        n.style.opacity = "1";
+      });
+      if (wrap) wrap.classList.remove("blank");
+      n._swapTimer = null;
+    }, delay);
+    return;
+  }
+
+  // default: smooth - subtle scale/pulse during swap
+  n.style.transform = "translateY(0) scale(0.96)";
+  n.style.opacity = "0";
+  const delay = Math.max(60, settings.transitionSpeed / 5);
+  n._swapTimer = setTimeout(() => {
+    n.src = newSrc;
+    void n.offsetWidth;
+    n.style.transform = "translateY(0) scale(1)";
+    n.style.opacity = "1";
+    if (wrap) wrap.classList.remove("blank");
+    n._swapTimer = null;
+  }, delay);
 }
 
 function attachEvents() {
@@ -447,14 +810,16 @@ function attachEvents() {
     settings.dateFormat = e.target.value;
     save();
   });
-  el.tzText.addEventListener("input", (e) => {
-    settings.timezone = e.target.value || "UTC+00:00";
-    save();
-  });
   el.dstMode.addEventListener("change", (e) => {
     settings.dstMode = e.target.value;
     save();
   });
+  if (el.tzSelect) {
+    el.tzSelect.addEventListener("change", (e) => {
+      settings.timezone = e.target.value || "UTC+00:00";
+      save();
+    });
+  }
   el.leadingZero.addEventListener("change", (e) => {
     settings.leadingZero = e.target.checked;
     save();
@@ -525,10 +890,47 @@ function attachEvents() {
       save();
     });
   }
+  if (el.transitionSelect) {
+    el.transitionSelect.addEventListener("change", (e) => {
+      settings.transition = e.target.value;
+      document.documentElement.setAttribute(
+        "data-transition",
+        settings.transition || "none"
+      );
+      save();
+    });
+  }
+  if (el.transitionSpeed) {
+    el.transitionSpeed.addEventListener("input", (e) => {
+      settings.transitionSpeed = +e.target.value;
+      document.documentElement.style.setProperty(
+        "--nixie-transition-duration",
+        settings.transitionSpeed + "ms"
+      );
+      updateSliderFill(e.target);
+      save();
+    });
+  }
   el.nightMode.addEventListener("change", (e) => {
     settings.nightMode = e.target.checked;
     save();
+    // Recompute brightness immediately when toggling night mode
+    updateBrightness();
   });
+  if (el.nightStart) {
+    el.nightStart.addEventListener("change", (e) => {
+      settings.nightStart = e.target.value;
+      save();
+      updateBrightness();
+    });
+  }
+  if (el.nightEnd) {
+    el.nightEnd.addEventListener("change", (e) => {
+      settings.nightEnd = e.target.value;
+      save();
+      updateBrightness();
+    });
+  }
   el.lightRevert.addEventListener("click", () => {
     settings.brightness = 90;
     updateBrightness();
@@ -545,6 +947,12 @@ function attachEvents() {
     settings.hourlyChime = e.target.checked;
     save();
   });
+  if (el.hourlyMelody) {
+    el.hourlyMelody.addEventListener("change", (e) => {
+      settings.hourlyMelody = e.target.value;
+      save();
+    });
+  }
   el.alarmTime.addEventListener("change", (e) => {
     settings.alarmTime = e.target.value;
     save();
@@ -558,11 +966,22 @@ function attachEvents() {
     updateSliderFill(e.target);
     save();
   });
-  el.soundTest.addEventListener("click", beep);
+  el.soundTest.addEventListener("click", () => {
+    // play selected test sound (alarm melody preferred)
+    const melody = settings.alarmMelody || settings.hourlyMelody || "beep";
+    playMelody(melody);
+  });
   el.alarmSave.addEventListener("click", () => {
     save();
     flash(translations.toastAlarmSaved || "Alarm saved");
   });
+
+  if (el.alarmMelody) {
+    el.alarmMelody.addEventListener("change", (e) => {
+      settings.alarmMelody = e.target.value;
+      save();
+    });
+  }
 
   el.slotMachine.addEventListener("change", (e) => {
     settings.slotMachine = e.target.checked;
@@ -572,14 +991,32 @@ function attachEvents() {
     settings.slotInterval = +e.target.value;
     save();
   });
-  el.units.addEventListener("change", (e) => {
-    settings.units = e.target.value;
-    save();
-  });
+  // units change handling is wired below with limits update
+  // update temp input limits when units change
+  if (el.units) {
+    el.units.addEventListener("change", (e) => {
+      settings.units = e.target.value;
+      // adjust input limits and clamp value
+      updateTempInputLimits();
+      save();
+    });
+  }
   el.showTemp.addEventListener("change", (e) => {
     settings.showTemp = e.target.checked;
     save();
+    // if enabled, display temperature overlay briefly
+    if (e.target.checked) {
+      const val = el.tempValue ? el.tempValue.value : "";
+      showTemperatureOverlay(val);
+      // auto-uncheck after showing so control acts as a trigger
+      setTimeout(() => {
+        el.showTemp.checked = false;
+        settings.showTemp = false;
+        save();
+      }, 1200);
+    }
   });
+  // ...existing code...
   el.modesDefaults.addEventListener("click", () => {
     settings.slotMachine = true;
     settings.slotInterval = 30;
@@ -633,6 +1070,20 @@ function attachEvents() {
     save();
   });
 
+  if (el.ledColor) {
+    el.ledColor.addEventListener("input", (e) => {
+      const hex = e.target.value;
+      // update settings.led
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      settings.led = { r, g, b };
+      document.documentElement.style.setProperty("--led-color", hex);
+      document.documentElement.style.setProperty("--underlight-color", hex);
+      save();
+    });
+  }
+
   window
     .matchMedia("(prefers-color-scheme: dark)")
     .addEventListener("change", (e) => {
@@ -676,7 +1127,12 @@ function applySettingsToUI() {
   el.is24hSelect.value = settings.is24h ? "true" : "false";
   document.body.setAttribute("data-12h", settings.is24h ? "false" : "true");
   el.dateFormat.value = settings.dateFormat;
-  el.tzText.value = settings.timezone || "UTC+00:00";
+  if (el.tzSelect) {
+    // If settings.timezone matches one of the select options, use it
+    const tz = settings.timezone || "UTC+00:00";
+    const opt = Array.from(el.tzSelect.options).find((o) => o.value === tz);
+    if (opt) el.tzSelect.value = tz;
+  }
   el.dstMode.value = settings.dstMode;
   el.leadingZero.checked = settings.leadingZero;
   el.autoDateDisplay.checked = settings.autoDate;
@@ -692,8 +1148,35 @@ function applySettingsToUI() {
   el.wpass.value = settings.wifi.pass || "";
   el.ntpEnable.checked = !!settings.ntpEnable;
   el.ntpServer.value = settings.ntpServer || "";
-  if (el.glowIntensity) el.glowIntensity.value = settings.glowIntensity;
-  if (el.glowIntensity) updateSliderFill(el.glowIntensity);
+  if (el.glowIntensity) {
+    el.glowIntensity.value = settings.glowIntensity;
+  }
+  if (el.transitionSelect)
+    el.transitionSelect.value = settings.transition || "smooth";
+  if (el.transitionSpeed) {
+    el.transitionSpeed.value = settings.transitionSpeed || 300;
+    updateSliderFill(el.transitionSpeed);
+  }
+  if (el.nightStart) el.nightStart.value = settings.nightStart || "23:00";
+  if (el.nightEnd) el.nightEnd.value = settings.nightEnd || "07:00";
+  if (el.glowIntensity) {
+    updateSliderFill(el.glowIntensity);
+  }
+  if (el.ledColor)
+    el.ledColor.value = rgbToHex(
+      settings.led.r,
+      settings.led.g,
+      settings.led.b
+    );
+  // apply transition visuals
+  document.documentElement.setAttribute(
+    "data-transition",
+    settings.transition || "none"
+  );
+  document.documentElement.style.setProperty(
+    "--nixie-transition-duration",
+    (settings.transitionSpeed || 300) + "ms"
+  );
   el.nightMode.checked = !!settings.nightMode;
   el.brightness.value = settings.brightness;
   updateSliderFill(el.brightness);
@@ -705,11 +1188,98 @@ function applySettingsToUI() {
   el.slotMachine.checked = !!settings.slotMachine;
   el.slotInterval.value = settings.slotInterval;
   el.units.value = settings.units;
+  // set temp input limits according to current units
+  updateTempInputLimits();
   el.showTemp.checked = !!settings.showTemp;
   el.deviceName.value = settings.deviceName;
   el.autoUpdates.checked = !!settings.autoUpdates;
   el.firmware.value = settings.firmware;
+  if (el.hourlyMelody)
+    el.hourlyMelody.value = settings.hourlyMelody || "chime1";
+  if (el.alarmMelody) el.alarmMelody.value = settings.alarmMelody || "beep";
   // Leading Zero is always visible and user-controlled
+}
+
+// Adjust the temp input min/max according to selected units
+function updateTempInputLimits() {
+  if (!el.tempValue) return;
+  if (settings.units === "c") {
+    el.tempValue.min = 0;
+    el.tempValue.max = 99;
+    // clamp
+    let v = Number(el.tempValue.value);
+    if (isNaN(v) || v < 0) v = 0;
+    if (v > 99) v = 99;
+    el.tempValue.value = String(v);
+  } else {
+    // convert Celsius 0..99 to Fahrenheit range
+    const fmin = Math.round((0 * 9) / 5 + 32);
+    const fmax = Math.round((99 * 9) / 5 + 32);
+    el.tempValue.min = fmin;
+    el.tempValue.max = fmax;
+    let v = Number(el.tempValue.value);
+    if (isNaN(v) || v < fmin) v = fmin;
+    if (v > fmax) v = fmax;
+    el.tempValue.value = String(v);
+  }
+}
+
+// Small melody player stub for testing — replace with real audio assets as needed
+function playMelody(name) {
+  if (!name || name === "none") return;
+  // Simple beep variations using WebAudio for demo
+  const ac = getAudioContext();
+  if (!ac) return beep();
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.connect(g).connect(ac.destination);
+  if (name === "beep") {
+    o.type = "sine";
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.001, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2, ac.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.25);
+    o.start();
+    setTimeout(() => o.stop(), 300);
+    return;
+  }
+  // chime/tone variants
+  if (name === "chime1" || name === "tone1") {
+    o.type = "square";
+    o.frequency.value = 660;
+  } else if (name === "chime2" || name === "tone2") {
+    o.type = "triangle";
+    o.frequency.value = 520;
+  } else {
+    o.type = "sine";
+    o.frequency.value = 720;
+  }
+  g.gain.setValueAtTime(0.001, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(
+    settings.volume / 100 || 0.4,
+    ac.currentTime + 0.02
+  );
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.2);
+  o.start();
+  setTimeout(() => o.stop(), 1200);
+}
+
+// Return true if current clock time falls inside night schedule (handles overnight spans)
+function isNight(now) {
+  if (!settings.nightMode) return false;
+  const start = settings.nightStart || "23:00";
+  const end = settings.nightEnd || "07:00";
+  const [sh, sm] = start.split(":").map((x) => parseInt(x, 10));
+  const [eh, em] = end.split(":").map((x) => parseInt(x, 10));
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = sh * 60 + (isNaN(sm) ? 0 : sm);
+  const endMinutes = eh * 60 + (isNaN(em) ? 0 : em);
+  if (startMinutes === endMinutes) return false; // degenerate
+  if (startMinutes < endMinutes) {
+    return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+  }
+  // overnight: e.g., 23:00 - 07:00
+  return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 }
 
 function applyTheme() {
@@ -727,6 +1297,8 @@ function applyTheme() {
 
   const hex = rgbToHex(settings.led.r, settings.led.g, settings.led.b);
   doc.style.setProperty("--led-color", hex);
+  // also set CSS variable for underlight color so glow CSS can use it
+  doc.style.setProperty("--underlight-color", hex);
   if (el.theme) {
     const map = {
       system: translations.themeSystem || "System",
@@ -819,7 +1391,10 @@ function renderTime(now) {
   }
   setDigit("m1", mStr[0]);
   setDigit("m2", mStr[1]);
-  if (settings.showSeconds) {
+  // If temperature overlay mode is active, do not overwrite seconds
+  if (el.nixie && el.nixie.dataset.showTemp === "true") {
+    // leave seconds as set by showTemperatureOverlay
+  } else if (settings.showSeconds) {
     setDigit("s1", sStr[0]);
     setDigit("s2", sStr[1]);
   } else {
@@ -840,13 +1415,18 @@ function tick() {
   // Sound features
   checkHourlyChime(now);
   checkAlarm(now);
+  // Update brightness according to night schedule (if enabled)
+  updateBrightness();
 }
 // Removed legacy animation code.
 
 function updateGlow() {
   const raw = Math.max(0, Math.min(100, settings.glowIntensity || 0)) / 100;
   // Apply easing (quadratic) for stronger change near high end
-  const eased = Math.pow(raw, 1.4); // tweak exponent for perceptual spacing
+  // Boost top end so 100 -> slightly above 1.0 for a stronger highlight
+  let eased = Math.pow(raw, 1.3);
+  if (raw > 0.95) eased = Math.min(1.0, eased * 1.08);
+  eased = Math.max(0, Math.min(1, eased));
   document.documentElement.style.setProperty(
     "--glow-intensity",
     eased.toString()
@@ -856,8 +1436,22 @@ function updateGlow() {
 function updateBrightness() {
   // brightness stored 10..100 -> scale to 0.1..1.0
   const b = Math.max(10, Math.min(100, settings.brightness || 90));
-  const val = (b / 100).toFixed(2);
+  let effective = b;
+  // apply night dimming schedule when enabled
+  if (settings.nightMode) {
+    const now = computeClockDate();
+    if (isNight(now)) {
+      // dim to 30% of configured brightness (tunable)
+      effective = Math.max(10, Math.round(b * 0.3));
+    }
+  }
+  const val = (effective / 100).toFixed(2);
   document.documentElement.style.setProperty("--tube-brightness", val);
+  // Map raw slider brightness to a perceptual opacity for the tubes
+  // so when user sets the slider to 100% the image opacity becomes 1.0.
+  const minOpacity = 0.15;
+  const opacity = (minOpacity + ((b - 10) / 90) * (1 - minOpacity)).toFixed(2);
+  document.documentElement.style.setProperty("--tube-opacity", opacity);
   if (el.brightness) updateSliderFill(el.brightness);
 }
 
@@ -961,6 +1555,51 @@ function beepBurst(times = 3, interval = 350) {
   // Fire first immediately
   beep();
   count++;
+}
+
+// Show a temporary temperature overlay on the clock for a short duration (defaults to 3s)
+function showTemperatureOverlay(temp, duration = 3000) {
+  const overlay = document.getElementById("tempOverlay");
+  if (!overlay) return;
+  const text = temp === "" || temp == null ? "--°" : `${temp}°`;
+  overlay.textContent = text;
+  overlay.classList.add("show");
+  // hide separators to avoid visual clash
+  const nix = el.nixie;
+  if (nix) {
+    // mark showTemp so renderTime doesn't clobber seconds
+    nix.dataset.showTemp = "true";
+    // save current seconds to restore later
+    runtime._savedSeconds = [
+      el.s1.getAttribute("src"),
+      el.s2.getAttribute("src"),
+    ];
+    // map temperature (number or placeholder) into two digits for seconds
+    const t = String(temp === "" || temp == null ? "--" : temp).padStart(
+      2,
+      " "
+    );
+    // if temp has sign or more digits, take last two chars
+    const rep = String(t).slice(-2);
+    // set seconds images (use placeholder for space or non-digit)
+    setDigit("s1", /\d/.test(rep[0]) ? rep[0] : "-");
+    setDigit("s2", /\d/.test(rep[1]) ? rep[1] : "-");
+  }
+  // After duration, hide overlay and restore
+  setTimeout(() => {
+    overlay.classList.remove("show");
+    if (nix) {
+      nix.dataset.showTemp = "false";
+      // restore saved seconds images
+      if (runtime._savedSeconds) {
+        if (runtime._savedSeconds[0]) el.s1.src = runtime._savedSeconds[0];
+        else setDigit("s1", "");
+        if (runtime._savedSeconds[1]) el.s2.src = runtime._savedSeconds[1];
+        else setDigit("s2", "");
+      }
+      runtime._savedSeconds = null;
+    }
+  }, duration);
 }
 
 function timePartsFromClock(now) {
