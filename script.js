@@ -1570,34 +1570,79 @@ function showTemperatureOverlay(temp, duration = 3000) {
     // mark showTemp so renderTime doesn't clobber seconds
     nix.dataset.showTemp = "true";
     // save current seconds to restore later
+    // save current seconds and last-minute digit to restore later
     runtime._savedSeconds = [
       el.s1.getAttribute("src"),
       el.s2.getAttribute("src"),
     ];
-    // map temperature (number or placeholder) into two digits for seconds
-    const t = String(temp === "" || temp == null ? "--" : temp).padStart(
-      2,
-      " "
-    );
-    // if temp has sign or more digits, take last two chars
-    const rep = String(t).slice(-2);
-    // set seconds images (use placeholder for space or non-digit)
-    setDigit("s1", /\d/.test(rep[0]) ? rep[0] : "-");
-    setDigit("s2", /\d/.test(rep[1]) ? rep[1] : "-");
+    runtime._savedM2 = el.m2.getAttribute("src");
+    // also save separator visual state (minute-second separator with id sep2)
+    const sepEl = document.getElementById("sep2");
+    if (sepEl) {
+      runtime._savedSep = {
+        opacity: sepEl.style.opacity || "",
+        visibility: sepEl.style.visibility || "",
+      };
+      // hide the separator dot during overlay
+      sepEl.style.opacity = "0";
+      // also stop animation if any
+      const dot = sepEl.querySelector(".dot");
+      if (dot) dot.style.animation = "none";
+    }
+
+    // Prepare temperature string and decide mapping
+    // Normalize to string without degree symbol
+    const raw = temp === "" || temp == null ? "--" : String(temp);
+    // If the value includes sign or non-digit, keep characters but we only map digits or placeholder
+    // Trim whitespace
+    const clean = raw.trim();
+    // If longer than 3, use last 3 chars (e.g., thousands unlikely)
+    const repFull = clean.length > 3 ? clean.slice(-3) : clean;
+    // If we have 3 characters and they are all digits (or digit+), display using m2+s1+s2
+    const digitsOnly = (s) => Array.from(s).filter((c) => /\d/.test(c)).length;
+    if (repFull.length === 3 && digitsOnly(repFull) >= 3) {
+      // Map 3-digit number: use last minute lamp (m2) as hundreds, seconds as tens/ones
+      const a = repFull[0];
+      const b = repFull[1];
+      const c = repFull[2];
+      setDigit("m2", /\d/.test(a) ? a : "-");
+      setDigit("s1", /\d/.test(b) ? b : "-");
+      setDigit("s2", /\d/.test(c) ? c : "-");
+    } else {
+      // Default: map last two characters into seconds pair (preserve minutes)
+      const t = String(repFull).padStart(2, " ");
+      const rep = String(t).slice(-2);
+      setDigit("s1", /\d/.test(rep[0]) ? rep[0] : "-");
+      setDigit("s2", /\d/.test(rep[1]) ? rep[1] : "-");
+    }
   }
   // After duration, hide overlay and restore
   setTimeout(() => {
     overlay.classList.remove("show");
     if (nix) {
       nix.dataset.showTemp = "false";
-      // restore saved seconds images
+      // restore saved seconds and minute image
       if (runtime._savedSeconds) {
         if (runtime._savedSeconds[0]) el.s1.src = runtime._savedSeconds[0];
         else setDigit("s1", "");
         if (runtime._savedSeconds[1]) el.s2.src = runtime._savedSeconds[1];
         else setDigit("s2", "");
       }
+      if (runtime._savedM2) {
+        if (runtime._savedM2) el.m2.src = runtime._savedM2;
+        else setDigit("m2", "");
+      }
       runtime._savedSeconds = null;
+      runtime._savedM2 = null;
+      // restore separator
+      const sepEl = document.getElementById("sep2");
+      if (sepEl && runtime._savedSep) {
+        sepEl.style.opacity = runtime._savedSep.opacity || "";
+        sepEl.style.visibility = runtime._savedSep.visibility || "";
+        const dot = sepEl.querySelector(".dot");
+        if (dot) dot.style.animation = "";
+      }
+      runtime._savedSep = null;
     }
   }, duration);
 }
