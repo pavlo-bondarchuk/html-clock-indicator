@@ -70,25 +70,35 @@
     padding: 4px 8px;
 }
 
-.nixie-wrap {
-    display: inline-block;
-    width: var(--nixie-img-width);
-    height: calc(var(--nixie-img-height) + 8px);
-    /* room for underlight */
-    margin: 0 2px;
-    position: relative;
-    opacity: var(--tube-opacity, 1);
-    transition: opacity .22s linear;
-}
-
-.nixie-img {
+.nixie-digit {
     width: 100%;
     height: var(--nixie-img-height);
-    object-fit: contain;
-    display: block;
-    -webkit-box-reflect: below 0px linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.4));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'BernhardGothic', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-weight: 300;
+    font-size: var(--digit-font-size);
+    line-height: 1;
+    color: rgba(255, 160, 40, 1);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 8px 24px rgba(255, 140, 40, 0.18), 0 0 18px rgba(255, 140, 40, 0.28);
     transition: opacity var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease), transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
+    position: relative;
+    z-index: 10;
+    margin-top: 50px;
 }
+
+.nixie-digit.active {
+    filter: drop-shadow(0 0 16px rgba(255, 140, 40, 0.9)) drop-shadow(0 0 40px rgba(255, 140, 40, 0.18));
+    transform: translateY(-2px);
+}
+
+.nixie-digit.hidden {
+    opacity: 0;
+}
+
 
 .nixie-wrap::after {
     content: "";
@@ -98,32 +108,31 @@
     bottom: 0px;
     width: calc(var(--nixie-img-width) * 0.9);
     height: calc(var(--nixie-img-height) * 0.18);
-    border-radius: 50%;
+    border-radius: 0;
     pointer-events: none;
     /* gradient stop follows glow intensity: at 100% the color fills the disc */
     background: radial-gradient(closest-side, var(--underlight-color, var(--led-color)) calc(var(--glow-intensity, 0) * 100%), transparent calc(var(--glow-intensity, 0) * 100%));
     /* JS stores --glow-intensity as a 0..1 eased value; use it to drive blur and opacity */
-    filter: blur(calc(6px * var(--glow-intensity, 0)));
-    opacity: var(--glow-intensity, 0);
+    filter: blur(calc(10px * var(--glow-intensity, 0)));
+    opacity: calc(var(--glow-intensity, 0) * 0.95);
+    z-index: 10;
 }
 
 /* Transition variants controlled via data attribute on root */
-:root[data-transition="smooth"] .nixie-img {
+:root[data-transition="smooth"] .nixie-tube,
+:root[data-transition="smooth"] .nixie-digit {
     transform-origin: 50% 50%;
 }
 
-:root[data-transition="fade"] .nixie-img {
+:root[data-transition="fade"] .nixie-tube,
+:root[data-transition="fade"] .nixie-digit {
     transform: none;
 }
 
-:root[data-transition="slide"] .nixie-img {
-    transform: translateY(6px);
-}
 
-/* If a digit is intentionally blank (leading zero hidden), remove its underlight */
 .nixie-wrap.blank::after {
-    opacity: 0 !important;
-    filter: none !important;
+    opacity: calc(var(--glow-intensity, 0) * 0.35);
+    filter: blur(calc(6px * var(--glow-intensity, 0)));
     pointer-events: none;
 }
 
@@ -167,16 +176,6 @@
     transition: opacity var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease), transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
     transform: translateY(0) scale(1);
     font-size: 18px;
-
-    /* Transition behavior notes:
-   JS will set inline transform values during swaps to create distinct
-   'smooth' (subtle scale), 'fade' (opacity only), and 'slide'
-   (translateY from below) effects. Keep transform-origin stable. */
-    .nixie-img {
-        transform-origin: 50% 50%;
-    }
-
-    background: var(--panel-2, var(--bg-1));
 }
 
 .theme-opt.active {
@@ -189,7 +188,7 @@
 }
 
 .theme-opt.focus:not(.active) {
-    background: var(--panel-2, var(--bg-1));
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 10px 30px rgba(255, 140, 40, 0.14);
 }
 
 .theme-opt .ico {
@@ -200,7 +199,6 @@
     display: block;
 }
 
-/* Tooltip closed state */
 .theme-select[data-label]:not(.open):hover::after {
     content: attr(data-label);
     position: absolute;
@@ -219,7 +217,6 @@
     z-index: 100;
 }
 
-/* Remove old custom select artifacts */
 @media (pointer: coarse) {
     .theme-toggle[data-label]:hover::after {
         display: none;
@@ -229,26 +226,28 @@
 @font-face {
     font-family: 'BernhardGothic';
     src: url('assets/BernhardGothicURW-ExtraLight.woff2') format('woff2');
-    font-weight: 200;
+    font-weight: 200 400;
     font-style: normal;
+    font-display: swap;
 }
 
 :root {
-    --accent: #ff6600;
-    --accent-1: #ff7a00;
-    --accent-2: #ff3d00;
-    --led-color: #ff6600;
-    --underlight-color: #ff6600;
-    /* sizing variables for nixie images and separators */
-    --nixie-img-width: 60px;
-    --nixie-img-height: 100px;
+    --accent: #f6a629;
+    --accent-1: #f6a629;
+    --accent-2: #f6a629;
+    --led-color: #f6a629;
+    --underlight-color: #f6a629;
+    --tube-width: 92px;
+    --tube-height: 160px;
+    --nixie-img-width: var(--tube-width);
+    --nixie-img-height: var(--tube-height);
+    --digit-font-size: 120px;
     --separator-width: 24px;
     --separator-dot-size: 8px;
     --separator-offset: 22px;
     --tube-brightness: .9;
     --radius: 16px;
     --focus: 0 0 0 2px rgba(255, 102, 0, .4);
-
     --bg-0: #fdfdfd;
     --bg-1: #f5f5f5;
     --panel: #ffffff;
@@ -266,20 +265,21 @@
     --range-track: #e0e0e0;
     --select-arrow-color: #888;
     --topbar-h: 72px;
-    /* clock card backgrounds (light/dark) */
     --clock-bg-light: #f8f6f2;
     --clock-text-light: #1a1a14;
     --clock-bg-dark: #0a0802;
     --clock-text-dark: #f5e8d6;
-    /* clock card backgrounds (light/dark) */
     --clock-bg-light: #f8f6f2;
     --clock-text-light: #1a1a14;
     --clock-bg-dark: #0a0802;
     --clock-text-dark: #f5e8d6;
-    /* transition for nixie digit changes */
     --nixie-transition-duration: 300ms;
     --nixie-transition-ease: cubic-bezier(.2, .9, .3, 1);
     --tube-opacity: 1;
+    --tube-base-color: #0ea5ff;
+    --tube-base-size: 0.6;
+    --tube-base-height: 0.08;
+    --tube-base-blur: 12px;
 }
 
 [data-theme="dark"] {
@@ -459,11 +459,13 @@ body {
 }
 
 .card-clock {
-    padding: 12px;
+    padding: 20px 20px 180px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+    gap: 100px;
 }
 
 .temp-overlay {
@@ -487,7 +489,6 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Make the clock card match nixie lamp background */
 .card.card-clock {
     background: var(--clock-bg-light);
     border: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
@@ -502,32 +503,27 @@ body {
     color: var(--clock-text-dark);
 }
 
-/* When temperature overlay is active, dim lamps and hide seconds/separators */
-#nixie[data-show-temp="true"] {
+#nixie-clock[data-show-temp="true"] {
     --tube-brightness: 0.25;
-    /* dim overall */
 }
 
-#nixie[data-show-temp="true"] .nixie-img {
-    /* dim most digits by default */
+#nixie-clock[data-show-temp="true"] .nixie-tube,
+#nixie-clock[data-show-temp="true"] .nixie-digit {
     filter: brightness(0.45) saturate(0.8);
 }
 
-#nixie[data-show-temp="true"] .nixie-wrap::after {
+#nixie-clock[data-show-temp="true"] .nixie-wrap::after {
     opacity: 0.2 !important;
-    /* reduce underlight for non-seconds */
     filter: blur(2px) !important;
 }
 
-/* Keep the seconds separator visible when showing temperature */
-
-/* Prevent dimming of the seconds pair: make them appear bright and keep underlight */
-#nixie[data-show-temp="true"] .sec-pair .nixie-img {
+#nixie-clock[data-show-temp="true"] .sec-pair .nixie-tube,
+#nixie-clock[data-show-temp="true"] .sec-pair .nixie-digit {
     filter: none !important;
     opacity: 1 !important;
 }
 
-#nixie[data-show-temp="true"] .sec-pair .nixie-wrap::after {
+#nixie-clock[data-show-temp="true"] .sec-pair .nixie-wrap::after {
     opacity: 1 !important;
     filter: none !important;
 }
@@ -549,7 +545,7 @@ body {
     font-weight: 700;
     letter-spacing: .2px;
     box-shadow: 0 10px 24px rgba(255, 80, 0, .25), inset 0 0 0 1px rgba(255, 255, 255, .06);
-    transition: transform .05s ease, filter .2s ease
+    transition: transform .05s ease, filter .2s ease;
 }
 
 .btn-primary:hover {
@@ -558,6 +554,10 @@ body {
 
 .btn-primary:active {
     transform: translateY(1px)
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 24px var(--accent);
 }
 
 .btn-ghost {
@@ -645,40 +645,6 @@ select {
     outline: none
 }
 
-/* Improve vertical centering of native checkmark in the option popup.
-   Many browsers render the option list natively; this rule nudges
-   option line-height and padding so the native checkmark aligns
-   closer to the option text center on platforms that allow option styling. */
-select option {
-    /* provide a consistent clickable row height and center text */
-    padding: 8px 14px;
-    font-size: 14px;
-    line-height: 20px;
-    /* ~match the visual height so check appears centered */
-    vertical-align: middle;
-}
-
-/* Slightly increase select control vertical padding to match option rows
-   so the selected value visually aligns with items in the popup. */
-select {
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-/* UTC select styling: use --accent for text, adapt to theme */
-#tzSelect {
-    border-radius: 12px;
-    padding: 12px 14px;
-    appearance: none;
-    border: 1px solid color-mix(in srgb, var(--accent) 8%, transparent);
-    background-color: var(--panel);
-    color: var(--accent);
-}
-
-#tzSelect:focus {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
 input:focus,
 select:focus {
     box-shadow: var(--focus);
@@ -737,8 +703,6 @@ select:focus {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-/* Visual lift: nudge the second-row controls in Display & Lighting up a bit
-   so they align with the left column group's rows like Time zone/DST/Separator */
 #blk-light .block-body>.field:nth-child(4),
 #blk-light .block-body>.field:nth-child(5) {
     transform: translateY(-6px);
@@ -773,7 +737,6 @@ select:focus {
     gap: 8px;
 }
 
-/* Prevent overflow from long labels/controls */
 .block-body .group,
 .block-body.two,
 .field {
@@ -786,6 +749,10 @@ select:focus {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+}
+
+.field select {
+    color: var(--accent);
 }
 
 .field span {
@@ -858,24 +825,19 @@ select:focus {
     padding: 0
 }
 
-/* Remove the default inner padding WebKit adds around the swatch so the
-   swatch fills the control square (affects Safari/Chrome on macOS/iOS). */
 input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 0 !important;
 }
 
-/* Ensure the swatch itself doesn't add extra spacing */
 input[type="color"]::-webkit-color-swatch {
     border-radius: 6px;
     border: none;
 }
 
-/* Firefox shadow element (limited support) */
 input[type="color"]::-moz-color-swatch {
     padding: 0;
 }
 
-/* Specific override for the under-light picker to be extra safe */
 #ledColor::-webkit-color-swatch-wrapper {
     padding: 0 !important;
 }
@@ -885,7 +847,6 @@ input[type="color"]::-moz-color-swatch {
     border: none;
 }
 
-/* Remove any outer padding on the specific under-light color control */
 #ledColor {
     padding: 0 !important;
     box-sizing: border-box;
@@ -901,7 +862,6 @@ input[type="color"]::-moz-color-swatch {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* set separator height to image height minus offset so dot aligns with digit bottom */
     height: calc(var(--nixie-img-height) - var(--separator-offset));
     justify-content: flex-end;
     gap: 8px;
@@ -911,8 +871,7 @@ input[type="color"]::-moz-color-swatch {
     width: var(--separator-dot-size);
     height: var(--separator-dot-size);
     border-radius: 50%;
-    /* explicit warm yellow similar to nixie glow */
-    background: #ffcc33;
+    background: var(--accent);
     box-shadow: 0 0 14px rgba(255, 204, 51, 0.55), 0 0 24px rgba(255, 170, 0, 0.15);
     filter: brightness(var(--tube-brightness));
     transition: opacity 180ms linear, transform 180ms linear
@@ -955,12 +914,22 @@ input[type="color"]::-moz-color-swatch {
 }
 
 .sec-pair {
-    display: none;
+    /* keep second lamps in the layout, but hide glyphs via data attribute
+       when seconds are turned off; this preserves visual spacing and keeps
+       tubes visible even when digits are not shown */
+    display: flex;
     gap: 12px;
 }
 
-.nixie[data-show-seconds="true"] .sec-pair {
-    display: flex;
+.nixie[data-show-seconds="false"] .sec-pair .nixie-digit {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nixie[data-show-seconds="false"] .sec-pair .nixie-wrap::after {
+    /* dim the underlight for hidden seconds while keeping the tube visible */
+    opacity: calc(var(--glow-intensity, 0) * 0.35);
+    filter: blur(calc(6px * var(--glow-intensity, 0)));
 }
 
 .digit {
@@ -1009,12 +978,9 @@ input[type="color"]::-moz-color-swatch {
     transition: filter .25s linear, text-shadow .25s linear;
 }
 
-.sep-sec {
-    display: none
-}
-
-.nixie[data-show-seconds="true"] .sep-sec {
-    display: flex
+.nixie:not([data-show-seconds="true"]) .sep-sec .dot {
+    filter: grayscale(1) brightness(0.6);
+    animation: none !important;
 }
 
 .date-line {
@@ -1025,13 +991,12 @@ input[type="color"]::-moz-color-swatch {
     letter-spacing: .3px
 }
 
-/* make date separators yellow like tube digits */
 .date-sep .dot {
     width: var(--separator-dot-size);
     height: var(--separator-dot-size);
     border-radius: 50%;
-    background: #ffcc33;
-    box-shadow: 0 0 10px rgba(255, 204, 51, 0.5);
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(255, 170, 0, 0.25);
 }
 
 .footer {
@@ -1044,7 +1009,6 @@ input[type="color"]::-moz-color-swatch {
     opacity: .85;
 }
 
-/* Back to top button */
 #backToTop {
     position: fixed;
     right: 16px;
@@ -1099,23 +1063,59 @@ select {
 }
 
 #nixie-date {
-    margin-top: 10px;
-    display: none;
+    width: 100%;
 }
 
-#nixie-date.visible {
+.nixie-wrap {
+    position: relative;
+    width: var(--tube-width);
+    height: var(--tube-height);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    vertical-align: middle;
+    -webkit-box-reflect: below 0px linear-gradient(to bottom, rgba(0, 0, 0, 0.0), rgba(0, 0, 0, 0.4));
+}
+
+.nixie-tube {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--tube-width);
+    height: var(--tube-height);
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--tube-opacity, 1);
+}
+
+.nixie-tube.active {
+    filter: drop-shadow(0 8px 20px color-mix(in srgb, var(--tube-base-color) 40%, transparent));
+}
+
+
+.nixie {
     display: flex;
+    gap: calc(var(--tube-width) * 0.06);
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: nowrap;
 }
 
-.date-sep {
-    animation: none;
-    gap: 8px;
+#nixie-date {
+    display: flex;
+    gap: calc(var(--tube-width) * 0.06);
+    justify-content: center;
+    margin-top: 12px;
 }
 
-.date-sep .dot {
-    width: 6px;
-    height: 6px;
-    animation: none;
+#nixie-date .nixie-wrap {
+    margin: 0 6px;
+}
+
+#nixie-date .year-block {
+    display: flex;
 }
 
 input[type="range"] {
@@ -1219,7 +1219,7 @@ input[type="range"]::-moz-range-track {
         padding: 15px 0 0;
     }
 
-    .nixie[data-show-seconds="true"] #secWrap {
+    #secWrap {
         display: flex;
         justify-content: center;
         margin-top: 4px;
@@ -1239,50 +1239,91 @@ input[type="range"]::-moz-range-track {
         gap: 10px 2px;
     }
 
-    .nixie .tube {
-        flex: 0 0 calc(50% - 22px);
+    .nixie-wrap {
+        display: inline-block;
+        width: var(--nixie-img-width);
+        height: var(--nixie-img-height);
+        margin: 0 2px;
+        position: relative;
+        opacity: var(--tube-opacity, 1);
+        transition: opacity .22s linear;
+        background-image: none !important;
+    }
+
+    .nixie-tube {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: var(--tube-width);
+        height: var(--tube-height);
+        pointer-events: none;
+        display: block;
+        z-index: 1;
+        object-fit: contain;
+    }
+
+    .nixie-wrap .nixie-digit {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -48%);
+        z-index: 2;
+        pointer-events: none;
         display: flex;
+        align-items: center;
         justify-content: center;
     }
 
-    /* Year block: keep year digits inline on desktop, but arrange as 2x2 grid on small screens */
-    .year-block {
-        display: inline-flex;
-        gap: 2px;
+    body[data-theme="light"] .nixie-wrap,
+    body[data-theme="dark"] .nixie-wrap {
+        background-image: none !important;
     }
 
-    @media (max-width:640px) {
-        .year-block {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 6px;
-            width: calc(var(--nixie-img-width) * 2 + 8px);
-            justify-items: center;
-            margin-top: 6px;
-        }
-
-        .year-block .nixie-wrap {
-            width: calc(var(--nixie-img-width));
-        }
+    .nixie-digit {
+        font-family: 'BernhardGothic', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        font-size: var(--digit-font-size);
     }
 
-    .nixie .separator {
-        flex-direction: row;
-        width: 100%;
-        gap: 10px;
-        justify-content: center;
+    .nixie-wrap.blank .nixie-digit {
+        opacity: 0;
+        transform: none;
     }
 
-    .nixie .separator .dot {
-        transform: none !important;
+    .nixie-digit.hidden {
+        opacity: 0;
+        transform: translateY(6px) scale(.98);
+        transition: opacity var(--nixie-transition-duration, 220ms) var(--nixie-transition-ease), transform var(--nixie-transition-duration, 220ms) var(--nixie-transition-ease);
     }
 
-    .nixie[data-show-seconds="true"] #secWrap {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        margin-top: 4px;
+    .nixie-digit.fade-out {
+        opacity: 0;
     }
+
+    .nixie-digit.slide-out {
+        transform: translateY(-8px);
+        opacity: 0;
+    }
+
+    .year-block .nixie-wrap {
+        width: calc(var(--nixie-img-width));
+    }
+}
+
+.nixie .separator {
+    flex-direction: row;
+    gap: 10px;
+    justify-content: center;
+}
+
+.nixie .separator .dot {
+    transform: none !important;
+}
+
+.nixie[data-show-seconds="true"] #secWrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
 }
 
 @media (max-width:560px) {
@@ -1302,7 +1343,6 @@ input[type="range"]::-moz-range-track {
     }
 }
 
-/* iOS-like wheel picker styles */
 .wheel-picker {
     position: fixed;
     inset: 0;
@@ -1428,4 +1468,59 @@ input[type="range"]::-moz-range-track {
 
 .wheel-ampm {
     width: 70px;
+}
+
+body[data-theme="dark"] select,
+body[data-theme="dark"] input[type="time"],
+body[data-theme="dark"] input[type="date"],
+body[data-theme="dark"] input[type="text"],
+body[data-theme="dark"] input[type="number"],
+body[data-theme="dark"] .wheel-sheet,
+body[data-theme="dark"] .wheel-column,
+body[data-theme="dark"] .wheel-column li,
+body[data-theme="dark"] .theme-select__panel,
+body[data-theme="dark"] .theme-opt {
+    background: #0f1012;
+    color: var(--accent);
+    border-color: rgba(255, 215, 150, 0.06);
+}
+
+body[data-theme="dark"] select,
+body[data-theme="dark"] .wheel-column li,
+body[data-theme="dark"] .theme-opt {
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "kern" 1;
+}
+
+body[data-theme="dark"] .wheel-sheet {
+    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.6);
+}
+
+body[data-theme="dark"] .wheel-column li.selected {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+body[data-theme="dark"] select,
+body[data-theme="dark"] input {
+    background: linear-gradient(180deg, #0b0b0c, #111214);
+    border: 1px solid rgba(255, 215, 150, 0.07);
+    color: var(--accent);
+}
+
+body[data-theme="dark"] .switch .slider {
+    background: linear-gradient(90deg, rgba(230, 194, 138, 0.12), rgba(230, 194, 138, 0.06));
+}
+
+body[data-theme="dark"] .wheel-column li {
+    color: var(--accent);
+}
+
+body[data-theme="dark"] .wheel-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+body[data-theme="dark"] ::placeholder {
+    color: rgba(230, 194, 138, 0.5);
 }

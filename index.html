@@ -84,16 +84,28 @@
     <main class="container">
       <section class="card card-clock">
         <div
+          id="nixie-clock"
           class="nixie"
-          id="nixie"
           data-separator="blinking"
           data-show-seconds="false"
         >
           <div class="nixie-wrap">
-            <img class="nixie-img" id="h1" src="assets/img/0.png" alt="hour1" />
+            <div class="nixie-digit" id="h1" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="h2" src="assets/img/0.png" alt="hour2" />
+            <div class="nixie-digit" id="h2" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
 
           <div class="separator" id="sep">
@@ -101,10 +113,22 @@
           </div>
 
           <div class="nixie-wrap">
-            <img class="nixie-img" id="m1" src="assets/img/0.png" alt="min1" />
+            <div class="nixie-digit" id="m1" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="m2" src="assets/img/0.png" alt="min2" />
+            <div class="nixie-digit" id="m2" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
 
           <div class="separator sep-sec" id="sep2">
@@ -113,19 +137,21 @@
 
           <div id="secWrap" class="sec-pair">
             <div class="nixie-wrap">
+              <div class="nixie-digit" id="s1" aria-hidden="true">0</div>
               <img
-                class="nixie-img"
-                id="s1"
-                src="assets/img/0.png"
-                alt="sec1"
+                class="nixie-tube"
+                src="assets/nixie-tube-light.png"
+                aria-hidden="true"
+                alt=""
               />
             </div>
             <div class="nixie-wrap">
+              <div class="nixie-digit" id="s2" aria-hidden="true">0</div>
               <img
-                class="nixie-img"
-                id="s2"
-                src="assets/img/0.png"
-                alt="sec2"
+                class="nixie-tube"
+                src="assets/nixie-tube-light.png"
+                aria-hidden="true"
+                alt=""
               />
             </div>
           </div>
@@ -133,40 +159,78 @@
 
         <div id="nixie-date" class="nixie">
           <div class="nixie-wrap">
-            <img class="nixie-img" id="d1" src="assets/img/0.png" alt="day1" />
+            <div class="nixie-digit" id="d1" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="d2" src="assets/img/0.png" alt="day2" />
+            <div class="nixie-digit" id="d2" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="separator date-sep"><div class="dot"></div></div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="mo1" src="assets/img/0.png" alt="mon1" />
+            <div class="nixie-digit" id="mo1" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="mo2" src="assets/img/0.png" alt="mon2" />
+            <div class="nixie-digit" id="mo2" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="separator date-sep"><div class="dot"></div></div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="y1" src="assets/img/0.png" alt="year1" />
+            <div class="nixie-digit" id="y1" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="nixie-wrap">
-            <img class="nixie-img" id="y2" src="assets/img/0.png" alt="year2" />
+            <div class="nixie-digit" id="y2" aria-hidden="true">0</div>
+            <img
+              class="nixie-tube"
+              src="assets/nixie-tube-light.png"
+              aria-hidden="true"
+              alt=""
+            />
           </div>
           <div class="year-block">
             <div class="nixie-wrap">
+              <div class="nixie-digit" id="y3" aria-hidden="true">0</div>
               <img
-                class="nixie-img"
-                id="y3"
-                src="assets/img/0.png"
-                alt="year3"
+                class="nixie-tube"
+                src="assets/nixie-tube-light.png"
+                aria-hidden="true"
+                alt=""
               />
             </div>
             <div class="nixie-wrap">
+              <div class="nixie-digit" id="y4" aria-hidden="true">0</div>
               <img
-                class="nixie-img"
-                id="y4"
-                src="assets/img/0.png"
-                alt="year4"
+                class="nixie-tube"
+                src="assets/nixie-tube-light.png"
+                aria-hidden="true"
+                alt=""
               />
             </div>
           </div>
@@ -327,7 +391,7 @@
               />
             </label>
             <label class="field">
-              <span data-i18n="tubeGlow">Tube Glow</span>
+              <span data-i18n="tubeGlow">LED Mode</span>
               <input
                 id="glowIntensity"
                 type="range"
@@ -337,7 +401,7 @@
               />
             </label>
             <label class="field">
-              <span data-i18n="tubeGlowColor">Tube Glow Color</span>
+              <span data-i18n="tubeGlowColor">LED Mode</span>
               <input id="ledColor" type="color" value="#ff6600" />
             </label>
             <label class="field">

@@ -297,7 +297,7 @@ const TRANSLATIONS = {
     brightness: "Brightness",
     glowIntensity: "Glow Intensity",
     tubeBrightness: "Tube Brightness",
-    tubeGlow: "Tube Glow",
+    tubeGlow: "LED Mode",
     tubeGlowColor: "Tube Glow Color",
     underlightColor: "Under-light color",
     animation: "Animation",
@@ -348,7 +348,6 @@ const TRANSLATIONS = {
     themeLight: "Light",
     themeDark: "Dark",
     themeSystem: "System",
-    // Toasts
     toastApplied: "Applied",
     toastReset: "Reset",
     toastPingOk: "Ping ok",
@@ -387,7 +386,7 @@ const TRANSLATIONS = {
     brightness: "Helligkeit",
     glowIntensity: "Glühintensität",
     tubeBrightness: "Röhrenhelligkeit",
-    tubeGlow: "Röhren-Glow",
+    tubeGlow: "LED-Modus",
     tubeGlowColor: "Röhren-Glow-Farbe",
     underlightColor: "Unterlichtfarbe",
     animation: "Animation",
@@ -513,7 +512,7 @@ const defaults = {
 settings = Object.assign({}, defaults, settings || {});
 
 const el = {
-  nixie: $("#nixie"),
+  nixie: $("#nixie-clock"),
   h1: $("#h1"),
   h2: $("#h2"),
   m1: $("#m1"),
@@ -587,7 +586,58 @@ const el = {
   footerBrand: $("#footerBrand"),
 };
 
+// Rebind DOM elements at runtime (useful when script runs before DOM fully parsed)
+function bindElements() {
+  // Support both legacy and current id; prefer the actual clock container id
+  el.nixie = $("#nixie-clock") || $("#nixie");
+  el.h1 = $("#h1");
+  el.h2 = $("#h2");
+  el.m1 = $("#m1");
+  el.m2 = $("#m2");
+  el.s1 = $("#s1");
+  el.s2 = $("#s2");
+  el.d1 = $("#d1");
+  el.d2 = $("#d2");
+  el.mo1 = $("#mo1");
+  el.mo2 = $("#mo2");
+  el.y1 = $("#y1");
+  el.y2 = $("#y2");
+  el.y3 = $("#y3");
+  el.y4 = $("#y4");
+  el.ledColor = $("#ledColor");
+  el.hourlyMelody = $("#hourlyMelody");
+  el.alarmMelody = $("#alarmMelody");
+  el.nightStart = $("#nightStart");
+  el.nightEnd = $("#nightEnd");
+  el.nixieDate = $("#nixie-date");
+  el.is24hSelect = $("#is24hSelect");
+  el.dateFormat = $("#dateFormat");
+  el.tzSelect = $("#tzSelect");
+  el.dstMode = $("#dstMode");
+  el.separatorBehavior = $("#separatorBehavior");
+  el.leadingZero = $("#leadingZero");
+  el.autoDateDisplay = $("#autoDateDisplay");
+  el.showSeconds = $("#showSeconds");
+  el.timeInput = $("#timeInput");
+  el.dateInput = $("#dateInput");
+  el.ssid = $("#ssid");
+  el.wpass = $("#wpass");
+  el.passToggle = $("#passToggle");
+  el.ntpEnable = $("#ntpEnable");
+  el.ntpServer = $("#ntpServer");
+  el.glowIntensity = $("#glowIntensity");
+  el.transitionSelect = $("#transitionSelect");
+  el.transitionSpeed = $("#transitionSpeed");
+  el.nightMode = $("#nightMode");
+  el.tempValue = $("#tempValue");
+  el.brightness = $("#brightness");
+  el.hourlyChime = $("#hourlyChime");
+  el.alarmTime = $("#alarmTime");
+  el.alarmDays = $("#alarmDays");
+}
+
 async function init() {
+  bindElements();
   await loadTranslations(settings.lang || "en");
   applySettingsToUI();
   // Normalize system to concrete light/dark for two-state toggle
@@ -686,21 +736,21 @@ function renderDate(d) {
   const yr = String(d.getFullYear());
 
   if (settings.dateFormat === "DD-MM-YYYY") {
-    el.d1.src = `assets/img/${day[0]}.png`;
-    el.d2.src = `assets/img/${day[1]}.png`;
-    el.mo1.src = `assets/img/${mon[0]}.png`;
-    el.mo2.src = `assets/img/${mon[1]}.png`;
+    setDigit("d1", day[0]);
+    setDigit("d2", day[1]);
+    setDigit("mo1", mon[0]);
+    setDigit("mo2", mon[1]);
   } else {
     // MM-DD-YYYY
-    el.d1.src = `assets/img/${mon[0]}.png`;
-    el.d2.src = `assets/img/${mon[1]}.png`;
-    el.mo1.src = `assets/img/${day[0]}.png`;
-    el.mo2.src = `assets/img/${day[1]}.png`;
+    setDigit("d1", mon[0]);
+    setDigit("d2", mon[1]);
+    setDigit("mo1", day[0]);
+    setDigit("mo2", day[1]);
   }
-  el.y1.src = `assets/img/${yr[0]}.png`;
-  el.y2.src = `assets/img/${yr[1]}.png`;
-  el.y3.src = `assets/img/${yr[2]}.png`;
-  el.y4.src = `assets/img/${yr[3]}.png`;
+  setDigit("y1", yr[0]);
+  setDigit("y2", yr[1]);
+  setDigit("y3", yr[2]);
+  setDigit("y4", yr[3]);
 }
 
 // Helper: setDigit now targets image elements and shows/hides them
@@ -709,92 +759,60 @@ function setDigit(id, val) {
   if (!n) return;
   const wrap = n.closest ? n.closest(".nixie-wrap") : n.parentElement;
 
-  // blank case: hide and mark wrapper
+  // cancel pending swap
+  if (n._swapTimer) {
+    clearTimeout(n._swapTimer);
+    n._swapTimer = null;
+  }
+
+  // blank case: mark wrapper and hide digit
   if (val === "" || val == null) {
-    // cancel any pending swaps
-    if (n._swapTimer) {
-      clearTimeout(n._swapTimer);
-      n._swapTimer = null;
+    // If already blank, do nothing (idempotent). This prevents repeated
+    // DOM churn where the 'hidden' class is re-applied every tick.
+    if (
+      (wrap && wrap.classList.contains("blank")) ||
+      n.classList.contains("hidden")
+    ) {
+      return;
     }
-    n.style.opacity = "0";
-    // after transition, remove src and mark blank
+
+    // animate out then mark as blank; do NOT clear textContent so the
+    // glyph remains in the DOM and can be made fully transparent via CSS
+    n.classList.add("hidden");
     n._swapTimer = setTimeout(() => {
-      n.style.visibility = "hidden";
-      n.removeAttribute("src");
       if (wrap) wrap.classList.add("blank");
+      // remove only transient animation classes; keep `hidden` so the
+      // digit remains invisible until explicitly shown by the swap logic.
+      n.classList.remove("fade-out", "slide-out");
       n._swapTimer = null;
     }, 220);
     return;
   }
 
-  // show value with crossfade: if same digit already shown, ensure visible
   const ch = String(val).slice(-1);
-  const newSrc = `assets/img/${ch}.png`;
-  if (n.getAttribute("src") === newSrc) {
-    // already correct; ensure visible and clear blank
-    n.style.visibility = "visible";
-    n.style.opacity = "1";
+  // already showing
+  if (n.textContent === ch) {
+    n.classList.remove("hidden", "fade-out", "slide-out");
     if (wrap) wrap.classList.remove("blank");
     return;
   }
 
-  // Start transition variant per settings: smooth | fade | slide
   const transitionMode =
     document.documentElement.getAttribute("data-transition") ||
     settings.transition ||
     "smooth";
-  if (n._swapTimer) {
-    clearTimeout(n._swapTimer);
-    n._swapTimer = null;
-  }
-  // ensure visible while swapping
-  n.style.visibility = "visible";
 
-  if (transitionMode === "fade") {
-    // fade out -> swap -> fade in (no movement)
-    n.style.transform = "translateY(0) scale(1)";
-    n.style.opacity = "0";
-    n._swapTimer = setTimeout(() => {
-      n.src = newSrc;
-      void n.offsetWidth;
-      n.style.opacity = "1";
-      if (wrap) wrap.classList.remove("blank");
-      n._swapTimer = null;
-    }, Math.max(80, settings.transitionSpeed / 4));
-    return;
-  }
-
-  if (transitionMode === "slide") {
-    // slide up from below while fading in
-    // move current image down a bit and fade out, then swap and bring from below
-    n.style.transform = "translateY(6px) scale(0.98)";
-    n.style.opacity = "0";
-    const delay = Math.max(60, settings.transitionSpeed / 4);
-    n._swapTimer = setTimeout(() => {
-      n.src = newSrc;
-      // start slightly below and hidden, then animate into place
-      n.style.transform = "translateY(10px) scale(0.98)";
-      void n.offsetWidth;
-      // animate to neutral
-      requestAnimationFrame(() => {
-        n.style.transform = "translateY(0) scale(1)";
-        n.style.opacity = "1";
-      });
-      if (wrap) wrap.classList.remove("blank");
-      n._swapTimer = null;
-    }, delay);
-    return;
-  }
-
-  // default: smooth - subtle scale/pulse during swap
-  n.style.transform = "translateY(0) scale(0.96)";
-  n.style.opacity = "0";
+  // perform transition: fade/slide/smooth all implemented as hide->swap->show
   const delay = Math.max(60, settings.transitionSpeed / 5);
+  if (transitionMode === "fade") n.classList.add("fade-out");
+  else if (transitionMode === "slide") n.classList.add("slide-out");
+  else n.classList.add("hidden");
+
   n._swapTimer = setTimeout(() => {
-    n.src = newSrc;
+    n.textContent = ch;
+    // trigger reflow then remove transition classes to animate in
     void n.offsetWidth;
-    n.style.transform = "translateY(0) scale(1)";
-    n.style.opacity = "1";
+    n.classList.remove("hidden", "fade-out", "slide-out");
     if (wrap) wrap.classList.remove("blank");
     n._swapTimer = null;
   }, delay);
@@ -1306,6 +1324,13 @@ function applyTheme() {
       if (theme === "dark") logo.src = "assets/logo_light.svg";
       else logo.src = "assets/logo_dark.svg";
     }
+    // update tube artwork in each nixie-wrap
+    try {
+      document.querySelectorAll(".nixie-tube").forEach((img) => {
+        if (theme === "dark") img.src = "assets/nixie-tube-dark.png";
+        else img.src = "assets/nixie-tube-light.png";
+      });
+    } catch (e) {}
   } catch (e) {}
   if (el.theme) {
     const map = {
@@ -1579,11 +1604,8 @@ function showTemperatureOverlay(temp, duration = 3000) {
     nix.dataset.showTemp = "true";
     // save current seconds to restore later
     // save current seconds and last-minute digit to restore later
-    runtime._savedSeconds = [
-      el.s1.getAttribute("src"),
-      el.s2.getAttribute("src"),
-    ];
-    runtime._savedM2 = el.m2.getAttribute("src");
+    runtime._savedSeconds = [el.s1.textContent, el.s2.textContent];
+    runtime._savedM2 = el.m2.textContent;
     // also save separator visual state (minute-second separator with id sep2)
     const sepEl = document.getElementById("sep2");
     if (sepEl) {
@@ -1631,13 +1653,13 @@ function showTemperatureOverlay(temp, duration = 3000) {
       nix.dataset.showTemp = "false";
       // restore saved seconds and minute image
       if (runtime._savedSeconds) {
-        if (runtime._savedSeconds[0]) el.s1.src = runtime._savedSeconds[0];
+        if (runtime._savedSeconds[0]) setDigit("s1", runtime._savedSeconds[0]);
         else setDigit("s1", "");
-        if (runtime._savedSeconds[1]) el.s2.src = runtime._savedSeconds[1];
+        if (runtime._savedSeconds[1]) setDigit("s2", runtime._savedSeconds[1]);
         else setDigit("s2", "");
       }
       if (runtime._savedM2) {
-        if (runtime._savedM2) el.m2.src = runtime._savedM2;
+        if (runtime._savedM2) setDigit("m2", runtime._savedM2);
         else setDigit("m2", "");
       }
       runtime._savedSeconds = null;

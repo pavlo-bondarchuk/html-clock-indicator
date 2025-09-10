@@ -89,5 +89,7 @@
   "toastBeep": "Beep",
   "themeSystem": "System",
   "themeLight": "Light",
-  "themeDark": "Dark"
+  "themeDark": "Dark",
+  "tubeGlowColor": "LED Mode",
+  "tubeGlow": "LED Mode"
 }
