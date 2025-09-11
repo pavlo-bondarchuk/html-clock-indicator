@@ -7,6 +7,27 @@ const runtime = {
 };
 let translations = {};
 
+// Map app language codes to BCP-47 tags preferred by native inputs
+function toLocaleTag(lang) {
+  if (!lang) return "en";
+  const map = { en: "en-US", de: "de-DE" };
+  return map[lang] || lang;
+}
+
+function setDocumentLanguage(lang) {
+  const tag = toLocaleTag(lang);
+  try {
+    document.documentElement.setAttribute("lang", tag);
+  } catch {}
+  try {
+    // Apply language to native locale-aware inputs
+    const inputs = document.querySelectorAll(
+      'input[type="date"], input[type="time"]'
+    );
+    inputs.forEach((inp) => inp.setAttribute("lang", tag));
+  } catch {}
+}
+
 function _getSeparators() {
   const container =
     el && el.nixie ? el.nixie : document.getElementById("nixie-clock");
@@ -692,6 +713,7 @@ function bindElements() {
 async function init() {
   bindElements();
   await loadTranslations(settings.lang || "en");
+  setDocumentLanguage(settings.lang || "en");
   applySettingsToUI();
   // Normalize system to concrete light/dark for two-state toggle
   if (settings.theme === "system") {
@@ -1047,6 +1069,13 @@ function updateImgFor(selectorOrEl, src) {
 function updateSeparatorImages() {
   try {
     const seps = _getSeparators();
+    // While showing temperature, keep separators blank
+    if (runtime._showingTemp) {
+      seps.forEach((s) =>
+        updateImgFor(s, "assets/img/clock/separator-empty.jpg")
+      );
+      return;
+    }
     seps.forEach((s) => {
       // separator DOM in markup uses <img class="separator" ...>
       const img =
@@ -1416,6 +1445,7 @@ function attachEvents() {
   el.lang.addEventListener("change", (e) => {
     settings.lang = e.target.value;
     loadTranslations(settings.lang);
+    setDocumentLanguage(settings.lang);
     save();
   });
 
@@ -1758,7 +1788,10 @@ function renderTime(now) {
     );
     if (minWrap && minWrap.length >= 2) {
       updateImgFor(minWrap[0], imageSrcFor("minut", mStr[0], 1));
-      updateImgFor(minWrap[1], imageSrcFor("minut", mStr[1], 2));
+      // If we are showing temperature with 3 digits, don't overwrite minute second tube
+      if (!(runtime._showingTemp && runtime._tempDigits === 3)) {
+        updateImgFor(minWrap[1], imageSrcFor("minut", mStr[1], 2));
+      }
     }
   } catch (e) {}
 
@@ -1768,7 +1801,10 @@ function renderTime(now) {
       ".nixie-wrap-sec .nixie-tube img"
     );
     if (secWrap && secWrap.length >= 2) {
-      if (settings.showSeconds) {
+      // When showing temperature overlay, do not modify seconds digits
+      if (runtime._showingTemp) {
+        // keep whatever showTemperatureOverlay placed
+      } else if (settings.showSeconds) {
         updateImgFor(secWrap[0], imageSrcFor("second", sStr[0], 1));
         updateImgFor(secWrap[1], imageSrcFor("second", sStr[1], 2));
       } else {
@@ -1921,15 +1957,18 @@ function beepBurst(times = 3, interval = 350) {
   count++;
 }
 
-function showTemperatureOverlay(temp, duration = 3000) {
+function showTemperatureOverlay(temp, duration = 5000) {
+  // Overlay is optional; we just dim tubes and swap digits
   const overlay = document.getElementById("tempOverlay");
-  if (!overlay) return;
-  const text = temp === "" || temp == null ? "--°" : `${temp}°`;
-  overlay.textContent = text;
-  overlay.classList.add("show");
+  if (overlay) {
+    const text = temp === "" || temp == null ? "--°" : `${temp}°`;
+    overlay.textContent = text;
+    overlay.classList.add("show");
+  }
   const nix = el.nixie;
   if (nix) {
     nix.dataset.showTemp = "true";
+    runtime._showingTemp = true;
     const m2img = document.querySelector(
       ".nixie-wrap-min .nixie-tube:nth-child(2) img"
     );
@@ -1963,49 +2002,52 @@ function showTemperatureOverlay(temp, duration = 3000) {
       );
     }
 
-    // prepare numeric representation
-    const raw = temp === "" || temp == null ? "--" : String(temp);
-    const clean = raw.trim();
-    const repFull = clean.length > 3 ? clean.slice(-3) : clean;
-    const digitsOnly = (s) => Array.from(s).filter((c) => /\d/.test(c)).length;
+    // Compute numeric digits; support 2 or 3 digits (e.g., Fahrenheit 100+)
+    const raw = temp === "" || temp == null ? "--" : String(temp).trim();
+    const onlyDigits = (raw.match(/\d/g) || []).join("");
+    const digits = onlyDigits.slice(-3); // last up to 3
+    runtime._tempDigits = digits.length;
+    // Flag whether 3-digit so CSS can undim minute second tube
+    if (nix && runtime._tempDigits === 3) nix.dataset.temp3 = "true";
+    else if (nix) delete nix.dataset.temp3;
 
-    if (repFull.length === 3 && digitsOnly(repFull) >= 3) {
-      const a = repFull[0];
-      const b = repFull[1];
-      const c = repFull[2];
-      // m2 -> minute (pos 2), s1/s2 -> seconds (pos1/2)
-      updateImgFor(m2img, imageSrcFor("minut", /\d/.test(a) ? a : "", 2));
-      updateImgFor(s1img, imageSrcFor("second", /\d/.test(b) ? b : "", 1));
-      updateImgFor(s2img, imageSrcFor("second", /\d/.test(c) ? c : "", 2));
+    if (runtime._tempDigits === 3) {
+      // Use minute second (pos2) + seconds pos1 + seconds pos2
+      const d0 = digits[digits.length - 3];
+      const d1 = digits[digits.length - 2];
+      const d2 = digits[digits.length - 1];
+      updateImgFor(m2img, imageSrcFor("minut", /\d/.test(d0) ? d0 : "", 2));
+      updateImgFor(s1img, imageSrcFor("second", /\d/.test(d1) ? d1 : "", 1));
+      updateImgFor(s2img, imageSrcFor("second", /\d/.test(d2) ? d2 : "", 2));
     } else {
-      // show two-digit value in seconds positions; leave m2 empty
-      const t = String(repFull).padStart(2, " ");
-      const rep = String(t).slice(-2);
+      // Show last two digits in seconds, blank minute second
+      const lastTwo = digits.slice(-2).padStart(2, " ");
       updateImgFor(m2img, imageSrcFor("minut", "", 2));
       updateImgFor(
         s1img,
-        imageSrcFor("second", /\d/.test(rep[0]) ? rep[0] : "", 1)
+        imageSrcFor("second", /\d/.test(lastTwo[0]) ? lastTwo[0] : "", 1)
       );
       updateImgFor(
         s2img,
-        imageSrcFor("second", /\d/.test(rep[1]) ? rep[1] : "", 2)
+        imageSrcFor("second", /\d/.test(lastTwo[1]) ? lastTwo[1] : "", 2)
       );
     }
   }
 
   setTimeout(() => {
-    overlay.classList.remove("show");
+    if (overlay) overlay.classList.remove("show");
     if (nix) {
       nix.dataset.showTemp = "false";
+      if (nix) delete nix.dataset.temp3;
       // restore saved images
-      const m2img = document.querySelector(
-        ".nixie-wrap-min .nixie-tube:nth-child(2) img"
-      );
       const s1img = document.querySelector(
         ".nixie-wrap-sec .nixie-tube:nth-child(1) img"
       );
       const s2img = document.querySelector(
         ".nixie-wrap-sec .nixie-tube:nth-child(2) img"
+      );
+      const m2img = document.querySelector(
+        ".nixie-wrap-min .nixie-tube:nth-child(2) img"
       );
       if (runtime._savedTempImgs) {
         if (runtime._savedTempImgs.m2)
@@ -2034,6 +2076,8 @@ function showTemperatureOverlay(temp, duration = 3000) {
       }
       applySeparatorMode();
       runtime._savedSep = null;
+      runtime._showingTemp = false;
+      runtime._tempDigits = 0;
     }
   }, duration);
 }

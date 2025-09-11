@@ -520,29 +520,20 @@ body {
 }
 
 
-#nixie-clock[data-show-temp="true"] {
-    --tube-brightness: 0.25;
-}
-
-#nixie-clock[data-show-temp="true"] .nixie-tube,
-#nixie-clock[data-show-temp="true"] .nixie-digit {
+/* Temperature mode: dim only hours and minutes, never the tubes used to show temperature */
+#nixie-clock[data-show-temp="true"] .nixie-wrap-hour img,
+#nixie-clock[data-show-temp="true"] .nixie-wrap-min img {
     filter: brightness(0.45) saturate(0.8);
 }
 
-#nixie-clock[data-show-temp="true"] .nixie-wrap::after {
-    opacity: 0.2 !important;
-    filter: blur(2px) !important;
+/* Seconds (used for 2-digit and 3-digit temp) stay normal */
+#nixie-clock[data-show-temp="true"] .nixie-wrap-sec img {
+    filter: none;
 }
 
-#nixie-clock[data-show-temp="true"] .sec-pair .nixie-tube,
-#nixie-clock[data-show-temp="true"] .sec-pair .nixie-digit {
-    filter: none !important;
-    opacity: 1 !important;
-}
-
-#nixie-clock[data-show-temp="true"] .sec-pair .nixie-wrap::after {
-    opacity: 1 !important;
-    filter: none !important;
+/* In 3-digit mode, minute second tube (min2) also stays normal */
+#nixie-clock[data-show-temp="true"][data-temp3="true"] .nixie-wrap-min .nixie-tube:nth-child(2) img {
+    filter: none;
 }
 
 .hint {
