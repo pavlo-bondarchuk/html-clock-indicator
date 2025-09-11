@@ -74,6 +74,10 @@
     position: relative;
 }
 
+#nixie-date[data-dim="true"] .nixie-tube::after {
+    opacity: .1;
+}
+
 .nixie-tube::after {
     content: "";
     position: absolute;
@@ -514,24 +518,24 @@ body {
         transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
 }
 
-/* Allow turning transitions off entirely */
 :root[data-transition="none"] .nixie img:not(.separator) {
     transition: none;
 }
 
 
-/* Temperature mode: dim only hours and minutes, never the tubes used to show temperature */
 #nixie-clock[data-show-temp="true"] .nixie-wrap-hour img,
-#nixie-clock[data-show-temp="true"] .nixie-wrap-min img {
-    filter: brightness(0.45) saturate(0.8);
+#nixie-clock[data-show-temp="true"] .nixie-wrap-min img,
+#nixie-clock[data-show-temp="true"] .nixie-wrap-separator img,
+#nixie-clock[data-show-temp="true"] .nixie-wrap-hour .nixie-tube::after,
+#nixie-clock[data-show-temp="true"] .nixie-wrap-min .nixie-tube::after,
+#nixie-clock[data-show-temp="true"] .nixie-wrap-separator .nixie-tube::after {
+    opacity: .1;
 }
 
-/* Seconds (used for 2-digit and 3-digit temp) stay normal */
 #nixie-clock[data-show-temp="true"] .nixie-wrap-sec img {
     filter: none;
 }
 
-/* In 3-digit mode, minute second tube (min2) also stays normal */
 #nixie-clock[data-show-temp="true"][data-temp3="true"] .nixie-wrap-min .nixie-tube:nth-child(2) img {
     filter: none;
 }
@@ -978,6 +982,12 @@ select {
     display: flex;
     align-items: flex-end;
     justify-content: center;
+}
+
+/* Dim date display to 10% when auto date is disabled */
+#nixie-date[data-dim="true"] .nixie-tube img {
+    /* Preserve transitions and brightness effect variables */
+    --digit-alpha: 0.1;
 }
 
 #nixie-date .year-block {

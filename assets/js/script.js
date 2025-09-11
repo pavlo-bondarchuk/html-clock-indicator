@@ -799,13 +799,15 @@ function setupThemeToggle() {
 }
 
 function renderDate(d) {
-  if (!settings.autoDate) {
-    // Hide visual marker and blank date tubes so UI reflects the toggle immediately
-    if (el.nixieDate) el.nixieDate.classList.remove("visible");
-    setDateTubesOff();
-    return;
+  // When auto date is disabled, keep date dimmed at 10% instead of fully off
+  if (el.nixieDate) {
+    if (!settings.autoDate) {
+      el.nixieDate.dataset.dim = "true";
+    } else {
+      delete el.nixieDate.dataset.dim;
+    }
   }
-  el.nixieDate.classList.add("visible");
+  if (el.nixieDate) el.nixieDate.classList.add("visible");
   const day = String(d.getDate()).padStart(2, "0");
   const mon = String(d.getMonth() + 1).padStart(2, "0");
   const yr = String(d.getFullYear());
@@ -1172,6 +1174,15 @@ function setDateTubesOff() {
   } catch (e) {}
 }
 
+function setDateDimmed(flag) {
+  if (!el.nixieDate) return;
+  if (flag) {
+    el.nixieDate.dataset.dim = "true";
+  } else {
+    delete el.nixieDate.dataset.dim;
+  }
+}
+
 function attachEvents() {
   el.is24h = $("#is24h");
   if (el.is24h) {
@@ -1205,12 +1216,9 @@ function attachEvents() {
     settings.autoDate = e.target.checked;
     save();
     try {
-      if (settings.autoDate) {
-        renderDate(computeClockDate());
-      } else {
-        if (el.nixieDate) el.nixieDate.classList.remove("visible");
-        setDateTubesOff();
-      }
+      // Toggle dim state instead of blanking; still render current date
+      setDateDimmed(!settings.autoDate);
+      renderDate(computeClockDate());
     } catch (e) {}
   });
   el.showSeconds.addEventListener("change", (e) => {
