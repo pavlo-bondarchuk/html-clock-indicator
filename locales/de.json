@@ -2,7 +2,7 @@
   "clockSettings": "Uhr-Einstellungen",
   "timeDate": "Zeit & Datum",
   "timeDateSub": "Format, Zeitzone und automatische Anpassungen einstellen.",
-  "timeFormat": "Zeitformat",
+  "timeFormat": "24-Stunden-Zeitformat",
   "24hour": "24-Stunden",
   "12hour": "12-Stunden",
   "leadingZero": "Führende Null",

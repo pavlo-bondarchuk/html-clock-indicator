@@ -2,7 +2,7 @@
   "clockSettings": "Clock Settings",
   "timeDate": "Time & Date",
   "timeDateSub": "Set format, timezone and automatic adjustments.",
-  "timeFormat": "Time format",
+  "timeFormat": "24-hour time format",
   "24hour": "24-hour",
   "12hour": "12-hour",
   "leadingZero": "Leading Zero",
