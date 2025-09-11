@@ -799,15 +799,15 @@ function setupThemeToggle() {
 }
 
 function renderDate(d) {
-  // When auto date is disabled, keep date dimmed at 10% instead of fully off
-  if (el.nixieDate) {
-    if (!settings.autoDate) {
-      el.nixieDate.dataset.dim = "true";
-    } else {
-      delete el.nixieDate.dataset.dim;
-    }
+  // When auto date is disabled, show empty tubes (blank images) to emulate non-lit lamps
+  if (!settings.autoDate) {
+    if (el.nixieDate) el.nixieDate.dataset.off = "true";
+    setDateTubesOff();
+    return;
   }
-  if (el.nixieDate) el.nixieDate.classList.add("visible");
+  if (el.nixieDate) delete el.nixieDate.dataset.off;
+  // ensure date separators reflect the current separator mode
+  updateDateSeparators();
   const day = String(d.getDate()).padStart(2, "0");
   const mon = String(d.getMonth() + 1).padStart(2, "0");
   const yr = String(d.getFullYear());
@@ -992,8 +992,14 @@ function updateImgFor(selectorOrEl, src) {
   else elimg = selectorOrEl;
   if (!elimg) return;
   if (elimg.tagName && elimg.tagName.toLowerCase() === "img") {
-    // avoid reassigning same
-    if (elimg.src && elimg.src.endsWith(src)) return;
+    // avoid reassigning same; also ensure no stale animation styles persist
+    if (elimg.src && elimg.src.endsWith(src)) {
+      try {
+        elimg.style.removeProperty("--digit-alpha");
+        elimg.style.transform = "";
+      } catch {}
+      return;
+    }
     // don't animate separators
     const isSeparator =
       elimg.classList && elimg.classList.contains("separator");
@@ -1012,9 +1018,17 @@ function updateImgFor(selectorOrEl, src) {
       clearTimeout(elimg._animTimer);
       elimg._animTimer = null;
       elimg._animating = false;
+      try {
+        elimg.style.removeProperty("--digit-alpha");
+        elimg.style.transform = "";
+      } catch {}
     }
     if (!nixReady || isSeparator || mode === "none" || mode === "smooth") {
       elimg.src = src;
+      try {
+        elimg.style.removeProperty("--digit-alpha");
+        elimg.style.transform = "";
+      } catch {}
       return;
     }
     // remember pending target to avoid duplicate work
@@ -1097,42 +1111,28 @@ function updateSeparatorImages() {
   } catch (e) {}
 }
 
-// Update separators inside the date block (#nixie-date) according to mode
+// Update separators inside the date block (#nixie-date): no blinking.
 function updateDateSeparators() {
   try {
-    const mode = settings.separator || "blinking";
     const seps = Array.from(
       document.querySelectorAll("#nixie-date .nixie-wrap-separator .separator")
     );
     if (!seps || !seps.length) return;
-    if (mode === "off") {
+    if (!settings.autoDate) {
+      // date is off: keep separators empty
       seps.forEach((s) => {
         s.classList.remove("on");
-        s.classList.add("off");
-        updateImgFor(s, "assets/img/clock/separator-off.jpg");
-      });
-      return;
-    }
-    if (mode === "static") {
-      seps.forEach((s) => {
-        s.classList.add("on");
         s.classList.remove("off");
-        updateImgFor(s, "assets/img/clock/separator-on.jpg");
+        updateImgFor(s, "assets/img/clock/separator-empty.jpg");
       });
       return;
     }
-    // blinking
-    const onState = runtime._sepState ? !!runtime._sepState.on : true;
+    // date is on: always show the day separator dot, no blinking
     seps.forEach((s) => {
-      if (onState) {
-        s.classList.add("on");
-        s.classList.remove("off");
-        updateImgFor(s, "assets/img/clock/separator-on.jpg");
-      } else {
-        s.classList.remove("on");
-        s.classList.add("off");
-        updateImgFor(s, "assets/img/clock/separator-off.jpg");
-      }
+      s.classList.add("on");
+      s.classList.remove("off");
+      // Use day-specific asset if available
+      updateImgFor(s, "assets/img/clock/separator-day-on.jpg");
     });
   } catch (e) {}
 }
@@ -1170,17 +1170,12 @@ function setDateTubesOff() {
       s.classList.remove("on");
       s.classList.add("off");
       updateImgFor(s, "assets/img/clock/separator-empty.jpg");
+      try {
+        s.style.removeProperty("--digit-alpha");
+        s.style.transform = "";
+      } catch {}
     });
   } catch (e) {}
-}
-
-function setDateDimmed(flag) {
-  if (!el.nixieDate) return;
-  if (flag) {
-    el.nixieDate.dataset.dim = "true";
-  } else {
-    delete el.nixieDate.dataset.dim;
-  }
 }
 
 function attachEvents() {
@@ -1216,9 +1211,13 @@ function attachEvents() {
     settings.autoDate = e.target.checked;
     save();
     try {
-      // Toggle dim state instead of blanking; still render current date
-      setDateDimmed(!settings.autoDate);
-      renderDate(computeClockDate());
+      if (settings.autoDate) {
+        if (el.nixieDate) delete el.nixieDate.dataset.off;
+        renderDate(computeClockDate());
+      } else {
+        if (el.nixieDate) el.nixieDate.dataset.off = "true";
+        setDateTubesOff();
+      }
     } catch (e) {}
   });
   el.showSeconds.addEventListener("change", (e) => {
@@ -1527,8 +1526,15 @@ function applySettingsToUI() {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;
   }
-  if (settings.autoDate) renderDate(computeClockDate());
-  else setDateTubesOff();
+  if (settings.autoDate) {
+    if (el.nixieDate) delete el.nixieDate.dataset.off;
+    renderDate(computeClockDate());
+  } else {
+    if (el.nixieDate) el.nixieDate.dataset.off = "true";
+    setDateTubesOff();
+  }
+  // Ensure date separators match non-blinking rule and current autoDate state
+  updateDateSeparators();
   el.timeInput.value = "";
   el.dateInput.value = "";
   el.ssid.value = settings.wifi.ssid || "";
@@ -1830,6 +1836,8 @@ function tick() {
   const now = computeClockDate();
   renderTime(now);
   renderDate(now);
+  // Ensure date separators follow non-blinking rule
+  updateDateSeparators();
   if (el.nixie) {
     el.nixie.dataset.separator = settings.separator;
     el.nixie.dataset.showSeconds = settings.showSeconds;

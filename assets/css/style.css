@@ -74,9 +74,6 @@
     position: relative;
 }
 
-#nixie-date[data-dim="true"] .nixie-tube::after {
-    opacity: .1;
-}
 
 .nixie-tube::after {
     content: "";
@@ -91,6 +88,12 @@
     filter: blur(calc(10px * var(--glow-intensity, 0)));
     opacity: calc(var(--glow-intensity, 0) * 0.95);
     z-index: 10;
+}
+
+/* Disable glow only for the date block when auto date is off */
+#nixie-date[data-off="true"] .nixie-tube::after {
+    opacity: 0 !important;
+    filter: none !important;
 }
 
 :root[data-transition="smooth"] .nixie-tube,
@@ -984,11 +987,6 @@ select {
     justify-content: center;
 }
 
-/* Dim date display to 10% when auto date is disabled */
-#nixie-date[data-dim="true"] .nixie-tube img {
-    /* Preserve transitions and brightness effect variables */
-    --digit-alpha: 0.1;
-}
 
 #nixie-date .year-block {
     display: flex;
