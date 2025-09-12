@@ -91,5 +91,11 @@
   "themeLight": "Light",
   "themeDark": "Dark",
   "tubeGlowColor": "LED Mode",
-  "tubeGlow": "LED Mode"
+  "tubeGlow": "LED Mode",
+  "wifiSSIDPlaceholder": "Your network name",
+  "wifiPassPlaceholder": "Your Wi-Fi password",
+  "timeServerPlaceholder": "pool.ntp.org",
+  "deviceNamePlaceholder": "ZIN-70-LivingRoom",
+  "backToTop": "Back to top",
+  "copyright": "© Millclock – 2025"
 }

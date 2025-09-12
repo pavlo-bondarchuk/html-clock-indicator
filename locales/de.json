@@ -91,5 +91,11 @@
   "themeLight": "Hell",
   "themeDark": "Dunkel",
   "tubeGlowColor": "LED-Modus",
-  "tubeGlow": "LED-Modus"
+  "tubeGlow": "LED-Modus",
+  "wifiSSIDPlaceholder": "Ihr Netzwerkname",
+  "wifiPassPlaceholder": "Ihr WLAN-Passwort",
+  "timeServerPlaceholder": "pool.ntp.org",
+  "deviceNamePlaceholder": "ZIN-70-Wohnzimmer",
+  "backToTop": "Nach oben",
+  "copyright": "© Millclock – 2025"
 }

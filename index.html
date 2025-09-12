@@ -91,141 +91,93 @@
           data-show-seconds="false"
         >
           <div class="nixie-wrap nixie-wrap-hour">
-            <div class="nixie-tube">
-              <img
-                class="hour2"
-                src="assets/img/clock/hour-empty-1.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="hour1" src="assets/img/clock/0.png" alt="" />
             </div>
-            <div class="nixie-tube">
-              <img
-                class="hour2"
-                src="assets/img/clock/hour-empty-2.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="hour2" src="assets/img/clock/0.png" alt="" />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-separator">
-            <div class="nixie-tube">
+            <div class="nixie-tube nixie-tube-sep">
               <img
                 class="separator"
-                src="assets/img/clock/separator-empty.jpg"
+                src="assets/img/clock/sep-colon.png"
                 alt=""
                 aria-hidden="true"
               />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-min">
-            <div class="nixie-tube">
-              <img
-                class="min1"
-                src="assets/img/clock/minut-empty-1.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="min1" src="assets/img/clock/0.png" alt="" />
             </div>
-            <div class="nixie-tube">
-              <img
-                class="min2"
-                src="assets/img/clock/minut-empty-2.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="min2" src="assets/img/clock/0.png" alt="" />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-separator">
-            <div class="nixie-tube">
+            <div class="nixie-tube nixie-tube-sep">
               <img
                 class="separator"
-                src="assets/img/clock/separator-empty.jpg"
+                src="assets/img/clock/sep-colon.png"
                 alt=""
                 aria-hidden="true"
               />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-sec">
-            <div class="nixie-tube">
-              <img
-                class="sec1"
-                src="assets/img/clock/second-empty-1.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="sec1" src="assets/img/clock/0.png" alt="" />
             </div>
-            <div class="nixie-tube">
-              <img
-                class="sec2"
-                src="assets/img/clock/second-empty-2.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="sec2" src="assets/img/clock/0.png" alt="" />
             </div>
           </div>
         </div>
         <div id="nixie-date" class="nixie reflect">
           <div class="nixie-wrap nixie-wrap-day">
-            <div class="nixie-tube">
-              <img
-                class="day1"
-                src="assets/img/clock/hour-empty-1.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="day1" src="assets/img/clock/0.png" alt="" />
             </div>
-            <div class="nixie-tube">
-              <img
-                class="day2"
-                src="assets/img/clock/hour-empty-2.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="day2" src="assets/img/clock/0.png" alt="" />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-separator">
-            <div class="nixie-tube">
+            <div class="nixie-tube nixie-tube-sep">
               <img
                 class="separator"
-                src="assets/img/clock/separator-day-on.jpg"
+                src="assets/img/clock/sep-dot.png"
                 alt=""
                 aria-hidden="true"
               />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-month">
-            <div class="nixie-tube">
-              <img
-                class="month1"
-                src="assets/img/clock/minut-empty-1.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="month1" src="assets/img/clock/0.png" alt="" />
             </div>
-            <div class="nixie-tube">
-              <img
-                class="month2"
-                src="assets/img/clock/minut-empty-2.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="month2" src="assets/img/clock/0.png" alt="" />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-separator">
-            <div class="nixie-tube">
+            <div class="nixie-tube nixie-tube-sep">
               <img
                 class="separator"
-                src="assets/img/clock/separator-day-on.jpg"
+                src="assets/img/clock/sep-dot.png"
                 alt=""
                 aria-hidden="true"
               />
             </div>
           </div>
           <div class="nixie-wrap nixie-wrap-year">
-            <div class="nixie-tube">
-              <img
-                class="year1"
-                src="assets/img/clock/second-empty-1.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="year1" src="assets/img/clock/0.png" alt="" />
             </div>
-            <div class="nixie-tube">
-              <img
-                class="year2"
-                src="assets/img/clock/second-empty-2.jpg"
-                alt=""
-              />
+            <div class="nixie-tube nixie-tube-lamp">
+              <img class="year2" src="assets/img/clock/0.png" alt="" />
             </div>
           </div>
         </div>
@@ -358,6 +310,7 @@
             </div>
           </div>
           <div class="block-actions">
+            <span class="toast" id="toast-time"></span>
             <button class="btn-ghost" id="tdReset" data-i18n="reset">
               Reset
             </button>
@@ -446,6 +399,7 @@
             </label>
           </div>
           <div class="block-actions">
+            <span class="toast" id="toast-light"></span>
             <button class="btn-ghost" id="lightRevert" data-i18n="revert">
               Revert
             </button>
@@ -474,12 +428,22 @@
           <div class="block-body two">
             <label class="field"
               ><span data-i18n="wifiSSID">Wi-Fi SSID</span>
-              <input id="ssid" type="text" placeholder="Your network name" />
+              <input
+                id="ssid"
+                type="text"
+                placeholder="Your network name"
+                data-i18n-placeholder="wifiSSIDPlaceholder"
+              />
             </label>
             <label class="field"
               ><span data-i18n="wifiPass">Wi-Fi Password</span>
               <div class="password">
-                <input id="wpass" type="password" placeholder="••••••••" />
+                <input
+                  id="wpass"
+                  type="password"
+                  placeholder="••••••••"
+                  data-i18n-placeholder="wifiPassPlaceholder"
+                />
                 <button type="button" id="passToggle" class="ghost">👁</button>
               </div>
             </label>
@@ -493,10 +457,16 @@
             </label>
             <label class="field"
               ><span data-i18n="timeServer">Time server (optional)</span>
-              <input id="ntpServer" type="text" placeholder="pool.ntp.org" />
+              <input
+                id="ntpServer"
+                type="text"
+                placeholder="pool.ntp.org"
+                data-i18n-placeholder="timeServerPlaceholder"
+              />
             </label>
           </div>
           <div class="block-actions">
+            <span class="toast" id="toast-net"></span>
             <button class="btn-ghost" id="netTest" data-i18n="test">
               Test
             </button>
@@ -563,6 +533,7 @@
             </label>
           </div>
           <div class="block-actions">
+            <span class="toast" id="toast-alarm"></span>
             <button class="btn-ghost" id="soundTest" data-i18n="testSound">
               Test Sound
             </button>
@@ -630,6 +601,7 @@
             </label>
           </div>
           <div class="block-actions">
+            <span class="toast" id="toast-modes"></span>
             <button class="btn-ghost" id="modesDefaults" data-i18n="defaults">
               Defaults
             </button>
@@ -657,6 +629,7 @@
                 id="deviceName"
                 type="text"
                 placeholder="ZIN-70-LivingRoom"
+                data-i18n-placeholder="deviceNamePlaceholder"
               />
             </label>
             <label class="field"
@@ -692,20 +665,13 @@
           </div>
         </article>
       </section>
-
-      <section class="card">
-        <div class="footer-actions">
-          <button class="btn-ghost" id="cancelAll" data-i18n="cancel">
-            Cancel
-          </button>
-          <button class="btn-primary" id="saveBtn" data-i18n="saveAll">
-            Save All
-          </button>
-          <span class="toast" id="toast"></span>
-        </div>
-      </section>
-
-      <button id="backToTop" aria-label="Back to top" title="Back to top">
+      <button
+        id="backToTop"
+        aria-label="Back to top"
+        title="Back to top"
+        data-i18n-title="backToTop"
+        data-i18n-label="backToTop"
+      >
         <svg
           viewBox="0 0 24 24"
           width="22"
@@ -722,7 +688,9 @@
         </svg>
       </button>
     </main>
-    <footer class="footer" id="footerBrand">© Millclock</footer>
+    <footer class="footer" id="footerBrand" data-i18n="copyright">
+      © Millclock – 2025
+    </footer>
     <script src="assets/js/script.js"></script>
     <svg
       style="position: absolute; width: 0; height: 0; overflow: hidden"
