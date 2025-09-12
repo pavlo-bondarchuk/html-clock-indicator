@@ -225,8 +225,28 @@ const el = {
 const digitSrc = (d) => DIGIT_PATH + d + ".png";
 const UNIT_C = DIGIT_PATH + "celsium.png";
 const UNIT_F = DIGIT_PATH + "farenheit.png";
-function setDigit(img, d) {
-  if (img) img.src = digitSrc(d);
+function setDigit(img, d, animate = true) {
+  if (!img) return;
+  const newSrc = digitSrc(d);
+  if (img.src.endsWith("/" + d + ".png")) {
+    img.dataset.prevDigit = d; // ensure stored
+    return;
+  }
+  img.src = newSrc;
+  if (!animate) {
+    img.dataset.prevDigit = d;
+    img.classList.remove("anim");
+    return;
+  }
+  if (settings.transitionMode !== "none") {
+    const prev = img.dataset.prevDigit;
+    img.dataset.prevDigit = d;
+    if (prev !== d) {
+      img.classList.remove("anim");
+      void img.offsetWidth; // restart
+      img.classList.add("anim");
+    }
+  }
 }
 function parseTz(str) {
   const m = /^UTC([+-])(\d{2}):(\d{2})$/.exec(str || "UTC+00:00");
@@ -303,12 +323,17 @@ function updateDate() {
   const monthFirst = settings.dateFormat === "MM-DD-YYYY";
   const first = monthFirst ? ms : ds;
   const second = monthFirst ? ds : ms;
-  setDigit(el.day1, first[0]);
-  setDigit(el.day2, first[1]);
-  setDigit(el.mon1, second[0]);
-  setDigit(el.mon2, second[1]);
-  setDigit(el.yr1, ys[0]);
-  setDigit(el.yr2, ys[1]);
+  // Date digits: no animation effect
+  setDigit(el.day1, first[0], false);
+  setDigit(el.day2, first[1], false);
+  setDigit(el.mon1, second[0], false);
+  setDigit(el.mon2, second[1], false);
+  setDigit(el.yr1, ys[0], false);
+  setDigit(el.yr2, ys[1], false);
+  // Ensure any leftover anim class removed (e.g. if switching mode mid-change)
+  el.date
+    .querySelectorAll("img.anim")
+    .forEach((i) => i.classList.remove("anim"));
 }
 function applySecondsVisibility() {
   const secWrap = el.clock?.querySelector(".nixie-wrap-sec");
@@ -489,6 +514,15 @@ function limitTempInput() {
   }
 }
 function wireControls() {
+  // Password visibility toggle
+  const passToggle = document.getElementById("passToggle");
+  const passInput = document.getElementById("wpass");
+  passToggle?.addEventListener("click", () => {
+    if (!passInput) return;
+    const isPwd = passInput.getAttribute("type") === "password";
+    passInput.setAttribute("type", isPwd ? "text" : "password");
+    passToggle.classList.toggle("revealed", isPwd);
+  });
   el.is24h?.addEventListener("change", () => {
     settings.is24h = el.is24h.checked;
     updateTime();
@@ -589,9 +623,21 @@ function wireControls() {
   document.getElementById("netSave")?.addEventListener("click", () => {
     showToast(localeDict.toastWifiSaved || "Wi-Fi saved", "net");
   });
-  // Alarm block actions
+  // Alarm block actions: sound test (no toast) + save alarm toast
   document.getElementById("soundTest")?.addEventListener("click", () => {
-    showToast(localeDict.toastBeep || "Beep", "alarm");
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880; // A5 tone
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.45);
+    } catch {}
   });
   document.getElementById("alarmSave")?.addEventListener("click", () => {
     showToast(localeDict.toastAlarmSaved || "Alarm saved", "alarm");
@@ -703,8 +749,8 @@ function showToast(msg, scope = "global") {
   if (scope === "time") id = "toast-time";
   else if (scope === "light") id = "toast-light";
   else if (scope === "net") id = "toast-net";
-  else if (scope === "alarm") id = "toast-alarm";
   else if (scope === "modes") id = "toast-modes";
+  else if (scope === "alarm") id = "toast-alarm";
   const t = document.getElementById(id);
   if (!t) return;
   t.textContent = msg;
