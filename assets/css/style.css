@@ -131,30 +131,30 @@
     transform: none;
 }
 
-/* Slide mode: vertical subtle slide on change */
+/* Slide mode: ultra subtle vertical glide */
 :root[data-transition="slide"] .nixie img.anim {
-    animation: digitSlide var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
+    animation: digitSlide var(--nixie-transition-duration, 260ms) cubic-bezier(.3, .9, .35, 1);
 }
 
-/* Smooth mode: scale & fade */
+/* Smooth mode: gentle fade + micro scale */
 :root[data-transition="smooth"] .nixie img.anim {
-    animation: digitSmooth var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
+    animation: digitSmooth var(--nixie-transition-duration, 260ms) cubic-bezier(.25, .8, .3, 1);
 }
 
-/* Fade mode: simple opacity cross-fade */
+/* Fade mode: pure opacity */
 :root[data-transition="fade"] .nixie img.anim {
-    animation: digitFade var(--nixie-transition-duration, 300ms) linear;
+    animation: digitFade var(--nixie-transition-duration, 240ms) linear;
 }
 
 @keyframes digitSmooth {
     0% {
         opacity: 0;
-        transform: scale(.85);
+        transform: scale(.94);
     }
 
-    60% {
+    55% {
         opacity: 1;
-        transform: scale(1.02);
+        transform: scale(1.005);
     }
 
     100% {
@@ -176,12 +176,12 @@
 @keyframes digitSlide {
     0% {
         opacity: 0;
-        transform: translateY(12%) scale(.95);
+        transform: translateY(6%) scale(.97);
     }
 
-    60% {
+    55% {
         opacity: 1;
-        transform: translateY(-4%) scale(1.01);
+        transform: translateY(-2%) scale(1);
     }
 
     100% {
@@ -307,7 +307,7 @@
     --tube-gap: 8px;
     --nixie-img-width: var(--tube-width);
     --nixie-img-height: var(--tube-height);
-    --separator-k: 0.2;
+    --separator-k: 0.31;
     --separator-width: calc(var(--tube-width) * var(--separator-k));
     --separator-height: 250px;
     --separator-dot-size: 8px;
@@ -684,9 +684,9 @@ body {
     box-shadow: 0 6px 16px rgba(190, 120, 20, .45) inset, 0 0 0 1px rgba(255, 255, 255, .05) inset;
 }
 
-.btn-primary:focus {
+/* .btn-primary:focus {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent);
-}
+} */
 
 .btn-ghost {
     background: transparent;
@@ -697,9 +697,15 @@ body {
     cursor: pointer
 }
 
-.btn-ghost:focus {
+/* Quick flash state (programmatically added/removed) */
+.flash {
     box-shadow: 0 0 24px var(--border-glow-color);
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
+
+/* .btn-ghost:focus {
+    box-shadow: 0 0 24px var(--border-glow-color);
+} */
 
 .switch {
     position: relative;

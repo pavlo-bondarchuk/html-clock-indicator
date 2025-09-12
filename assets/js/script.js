@@ -469,10 +469,6 @@ function applyLighting() {
     const c = settings.ledColor;
     root.style.setProperty("--led-color", c);
     root.style.setProperty("--underlight-color", c);
-    // Always keep accent variables in sync with current LED color (simplified design rule)
-    root.style.setProperty("--accent", c);
-    root.style.setProperty("--accent-1", c);
-    root.style.setProperty("--accent-2", c);
   }
 }
 function applyTransition() {
@@ -607,6 +603,7 @@ function wireControls() {
   });
   el.resetBtn?.addEventListener("click", () => {
     resetTimeDateSection();
+    flashButton(el.resetBtn);
   });
   document.getElementById("lightApply")?.addEventListener("click", () => {
     applyLighting();
@@ -615,6 +612,7 @@ function wireControls() {
   });
   document.getElementById("lightRevert")?.addEventListener("click", () => {
     resetLightingSection();
+    flashButton(document.getElementById("lightRevert"));
   });
   // Connectivity block actions
   document.getElementById("netTest")?.addEventListener("click", () => {
@@ -648,6 +646,7 @@ function wireControls() {
   });
   document.getElementById("modesDefaults")?.addEventListener("click", () => {
     resetModesSection();
+    flashButton(document.getElementById("modesDefaults"));
     showToast(localeDict.toastDefaults || "Defaults", "modes");
   });
 }
@@ -680,30 +679,32 @@ function updateTemperatureDisplay() {
   let digits = String(Math.abs(val));
   if (digits.length > 3) digits = digits.slice(-3);
   const unitImg = settings.units === "f" ? UNIT_F : UNIT_C;
-  // Blank hours
+  // New layout: hours always blank, seconds last tube (sec2) shows unit (°C/°F), preceding tubes carry up to 3 digits
   if (el.h1) el.h1.src = DIGIT_EMPTY;
   if (el.h2) el.h2.src = DIGIT_EMPTY;
-  // Layouts:
-  // 2-digit: [/][/][–][/][UNIT][–][d1][d2]
-  // 3-digit: [/][/][–][UNIT][d1][–][d2][d3]
-  if (digits.length === 3) {
-    if (el.m1) el.m1.src = unitImg;
-    if (el.m2) el.m2.src = digitSrc(digits[0]);
-    if (el.s1) el.s1.src = digitSrc(digits[1]);
-    if (el.s2) el.s2.src = digitSrc(digits[2]);
-  } else if (digits.length === 2) {
-    if (el.m1) el.m1.src = DIGIT_EMPTY;
-    if (el.m2) el.m2.src = unitImg;
-    if (el.s1) el.s1.src = digitSrc(digits[0]);
-    if (el.s2) el.s2.src = digitSrc(digits[1]);
-  } else if (digits.length === 1) {
-    // single digit fallback
-    if (el.m1) el.m1.src = DIGIT_EMPTY;
-    if (el.m2) el.m2.src = unitImg;
-    if (el.s1) el.s1.src = DIGIT_EMPTY;
-    if (el.s2) el.s2.src = digitSrc(digits[0]);
+  // Clear all target digit tubes first to avoid residue when digit count shrinks
+  if (el.m1) el.m1.src = DIGIT_EMPTY;
+  if (el.m2) el.m2.src = DIGIT_EMPTY;
+  if (el.s1) el.s1.src = DIGIT_EMPTY;
+  if (el.s2) el.s2.src = unitImg; // unit always in last seconds lamp
+
+  // Map digits right-aligned before unit
+  // Possible digit placements (m1 m2 s1 [s2=UNIT]) for 1..3 digits:
+  // 1 digit:        [e][e][d][UNIT]
+  // 2 digits:       [e][d1][d2][UNIT]
+  // 3 digits (°F):  [d1][d2][d3][UNIT]
+  const arr = digits.split("");
+  if (arr.length === 1) {
+    if (el.s1) el.s1.src = digitSrc(arr[0]);
+  } else if (arr.length === 2) {
+    if (el.m2) el.m2.src = digitSrc(arr[0]);
+    if (el.s1) el.s1.src = digitSrc(arr[1]);
+  } else if (arr.length === 3) {
+    if (el.m1) el.m1.src = digitSrc(arr[0]);
+    if (el.m2) el.m2.src = digitSrc(arr[1]);
+    if (el.s1) el.s1.src = digitSrc(arr[2]);
   }
-  // Ensure separators will be blank (applied in applySecondsVisibility / applySeparatorMode)
+  // Ensure separators will be blank (handled elsewhere) - no extra action
 }
 // ==== Section Reset Helpers & Toast ====
 function resetTimeDateSection() {
@@ -721,7 +722,7 @@ function resetTimeDateSection() {
   applySeparatorMode();
   updateTime();
   updateDate();
-  showToast(localeDict.toastReset || "Reset");
+  showToast(localeDict.toastReset || "Reset", "time", 600);
 }
 function resetLightingSection() {
   settings.brightness = defaults.brightness;
@@ -733,7 +734,7 @@ function resetLightingSection() {
   applySettingsToControls();
   applyLighting();
   applyTransition();
-  showToast(localeDict.toastReverted || "Reverted", "light");
+  showToast(localeDict.toastReverted || "Reverted", "light", 600);
 }
 function resetModesSection() {
   settings.showTemp = defaults.showTemp;
@@ -742,9 +743,9 @@ function resetModesSection() {
   enforceTempLimit();
   applySettingsToControls();
   updateTime();
-  showToast(localeDict.toastDefaults || "Defaults", "time");
+  showToast(localeDict.toastDefaults || "Defaults", "time", 600);
 }
-function showToast(msg, scope = "global") {
+function showToast(msg, scope = "global", duration = 1800) {
   let id = "toast";
   if (scope === "time") id = "toast-time";
   else if (scope === "light") id = "toast-light";
@@ -756,5 +757,13 @@ function showToast(msg, scope = "global") {
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(t._to);
-  t._to = setTimeout(() => t.classList.remove("show"), 1800);
+  t._to = setTimeout(() => t.classList.remove("show"), duration);
+}
+
+// Briefly flash a ghost button (Reset/Revert) for 500ms
+function flashButton(btn) {
+  if (!btn) return;
+  btn.classList.add("flash");
+  clearTimeout(btn._flashTo);
+  btn._flashTo = setTimeout(() => btn.classList.remove("flash"), 500);
 }
