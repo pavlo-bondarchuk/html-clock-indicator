@@ -382,8 +382,12 @@ function applySeparatorMode() {
   const seps = el.clock.querySelectorAll(".separator");
   if (!seps.length) return;
   if (settings.showTemp) {
-    // keep separators blank
-    seps.forEach((i) => (i.src = SEP_EMPTY));
+    // Temperature mode: first separator blank, second shows decimal dot if decimal retained
+    if (seps[0]) seps[0].src = SEP_EMPTY;
+    if (seps[1]) {
+      if (el.clock.getAttribute("data-temp-dec") === "1") seps[1].src = SEP_DOT;
+      else seps[1].src = SEP_EMPTY;
+    }
     return;
   }
   switch (settings.separatorBehavior) {
@@ -600,6 +604,8 @@ function wireControls() {
     settings.showTemp = el.showTemp.checked;
     if (settings.showTemp) {
       updateTemperatureDisplay();
+      // Ensure blinking stops and separators adjusted for temperature mode
+      applySeparatorMode();
     } else {
       // clear temp specific state
       el.clock?.removeAttribute("data-temp-dec");
@@ -741,11 +747,7 @@ function updateTemperatureDisplay() {
   const rootClock = el.clock;
   rootClock?.setAttribute("data-temp-dec", "1");
   const unitImg = settings.units === "f" ? UNIT_F : UNIT_C;
-  // Manage separators: first blank, second becomes decimal dot image
-  const seps = el.clock?.querySelectorAll(".separator");
-  if (seps && seps.length >= 2) {
-    seps[0].src = SEP_EMPTY;
-  }
+  // Separators handled centrally in applySeparatorMode
   // Clear hours
   if (el.h1) el.h1.src = DIGIT_EMPTY;
   if (el.h2) el.h2.src = DIGIT_EMPTY;
@@ -779,13 +781,8 @@ function updateTemperatureDisplay() {
     if (el.s1) el.s1.src = digitSrc(trimmed[2]);
   }
   // Apply decimal dot image only if we kept decimal
-  if (seps && seps.length >= 2) {
-    if (rootClock?.getAttribute("data-temp-dec") === "1") {
-      seps[1].src = SEP_DOT;
-    } else {
-      seps[1].src = SEP_EMPTY;
-    }
-  }
+  // Update separators after deciding decimal presence
+  applySeparatorMode();
 }
 // ==== Section Reset Helpers & Toast ====
 function resetTimeDateSection() {
