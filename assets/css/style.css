@@ -649,6 +649,26 @@ body {
     filter: none;
 }
 
+/* Temperature decimal indicator: draw a small dot before the decimal digit (sec1) */
+#nixie-clock[data-show-temp="true"][data-temp-dec="1"] .nixie-wrap-sec .nixie-tube:nth-child(1) {
+    position: relative;
+}
+
+#nixie-clock[data-show-temp="true"][data-temp-dec="1"] .nixie-wrap-sec .nixie-tube:nth-child(1)::before {
+    content: "";
+    position: absolute;
+    left: 12%;
+    bottom: 18%;
+    width: 10%;
+    aspect-ratio: 1/1;
+    background: color-mix(in srgb, var(--led-color) 85%, #0000);
+    border-radius: 50%;
+    box-shadow: 0 0 6px color-mix(in srgb, var(--led-color) 70%, transparent);
+    opacity: var(--tube-opacity, 1);
+    pointer-events: none;
+    z-index: 6;
+}
+
 #nixie-clock[data-show-temp="true"][data-temp3="true"] .nixie-wrap-min .nixie-tube:nth-child(2) img {
     filter: none;
 }
@@ -942,15 +962,21 @@ label.field {
     justify-content: flex-end;
 }
 
-.block-actions .toast {
+/* Toast (global) */
+.toast {
+    min-width: 80px;
+    font-size: 13px;
+    color: var(--muted);
     opacity: 0;
     transform: translateY(4px);
     transition: opacity .25s ease, transform .25s ease;
+    pointer-events: none;
 }
 
-.block-actions .toast.show {
+.toast.show {
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
 }
 
 .block {
@@ -975,11 +1001,7 @@ label.field {
 }
 
 
-.toast {
-    min-width: 80px;
-    font-size: 13px;
-    color: var(--muted)
-}
+/* (moved toast base styles above) */
 
 .color-row {
     display: flex;
@@ -1073,6 +1095,37 @@ input[type="color"]::-moz-color-swatch {
     font-size: 13px;
     text-align: center;
     opacity: .85;
+}
+
+/* Global Save/Cancel card (transparent variant) */
+.global-actions-card {
+    max-width: 1148px;
+    margin: 8px auto 12px;
+    background: var(--bg-1);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+
+}
+
+.global-actions-card .block-actions {
+    width: 100%;
+}
+
+@media (max-width:640px) {
+    .global-actions-card {
+        justify-content: center;
+    }
+
+    .global-actions-card .block-actions {
+        flex-wrap: wrap;
+        justify-content: center !important;
+    }
 }
 
 #backToTop {

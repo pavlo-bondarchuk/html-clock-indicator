@@ -603,8 +603,10 @@
                 <input
                   id="tempValue"
                   type="number"
-                  value="22"
-                  style="width: 80px"
+                  step="0.5"
+                  inputmode="decimal"
+                  value="22.5"
+                  style="width: 100px"
                 />
               </div>
             </label>
@@ -697,6 +699,16 @@
         </svg>
       </button>
     </main>
+    <!-- Global action bar (Save All / Cancel) just above footer -->
+    <div class="global-actions-card" id="globalActions">
+      <span class="toast" id="toast"></span>
+      <button class="btn-ghost" id="btnCancelAll" data-i18n="cancelAll">
+        Cancel
+      </button>
+      <button class="btn-primary" id="btnSaveAll" data-i18n="saveAll">
+        Save All
+      </button>
+    </div>
     <footer class="footer" id="footerBrand" data-i18n="copyright">
       © Millclock – 2025
     </footer>

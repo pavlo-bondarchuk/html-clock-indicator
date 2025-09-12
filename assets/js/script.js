@@ -3,6 +3,7 @@
 const DIGIT_PATH = "assets/img/clock/";
 const SEP_COLON = "assets/img/clock/sep-colon.png";
 const SEP_EMPTY = "assets/img/clock/sep-e.png"; // separator blank
+const SEP_DOT = "assets/img/clock/sep-dot.png"; // separator dot (for temperature decimal)
 const DIGIT_EMPTY = "assets/img/clock/e.png"; // digit (tube off)
 const defaults = {
   is24h: true,
@@ -25,7 +26,7 @@ const defaults = {
   transitionSpeed: 300, // ms
   // Temperature display
   showTemp: false,
-  tempValue: 22, // integer temperature value
+  tempValue: 22.5, // temperature value (supports one decimal default 22.5 per requirement)
   units: "c", // 'c' or 'f'
 };
 
@@ -283,21 +284,23 @@ function updateTime() {
       : String(h).padStart(2, "0");
   const mStr = String(m).padStart(2, "0");
   const sStr = String(s).padStart(2, "0");
+  // Hours & minutes: update WITHOUT animation
   if (hStr.length === 1) {
     if (el.h1) el.h1.src = DIGIT_EMPTY;
-    setDigit(el.h2, hStr[0]);
+    setDigit(el.h2, hStr[0], false);
   } else {
-    setDigit(el.h1, hStr[0]);
-    setDigit(el.h2, hStr[1]);
+    setDigit(el.h1, hStr[0], false);
+    setDigit(el.h2, hStr[1], false);
   }
-  setDigit(el.m1, mStr[0]);
-  setDigit(el.m2, mStr[1]);
+  setDigit(el.m1, mStr[0], false);
+  setDigit(el.m2, mStr[1], false);
   if (settings.showTemp) {
     updateTemperatureDisplay();
   } else {
     if (settings.showSeconds) {
-      setDigit(el.s1, sStr[0]);
-      setDigit(el.s2, sStr[1]);
+      // Seconds ONLY: animate when they change
+      setDigit(el.s1, sStr[0], true);
+      setDigit(el.s2, sStr[1], true);
     } else {
       if (el.s1) el.s1.src = DIGIT_EMPTY;
       if (el.s2) el.s2.src = DIGIT_EMPTY;
@@ -343,6 +346,10 @@ function applySecondsVisibility() {
     // temperature mode: both separators blank
     seps?.forEach((s) => (s.src = SEP_EMPTY));
     return;
+  }
+  // If previously temperature with decimal, might have left dot image in second separator
+  if (seps && seps[1] && seps[1].src.endsWith("sep-dot.png")) {
+    seps[1].src = SEP_EMPTY;
   }
   if (settings.showSeconds) {
     if (seps && seps[1] && settings.separatorBehavior !== "off") {
@@ -451,6 +458,10 @@ function applySettingsToControls() {
   // Temperature controls
   el.showTemp && (el.showTemp.checked = settings.showTemp);
   el.tempValue && (el.tempValue.value = settings.tempValue);
+  if (el.tempValue && !el.tempValue.step) {
+    el.tempValue.step = "0.1";
+    el.tempValue.setAttribute("inputmode", "decimal");
+  }
   el.units && (el.units.value = settings.units);
   enforceTempLimit();
   applySecondsVisibility();
@@ -482,31 +493,37 @@ function applyTransition() {
 }
 
 function enforceTempLimit() {
+  // No hard numeric max now; allow broader range. Just sanitize later.
   if (!el.tempValue) return;
-  const isF = settings.units === "f";
-  const maxVal = isF ? 999 : 99; // 3 digits F, 2 digits C
-  el.tempValue.max = String(maxVal);
-  // Trim existing value if exceeding
-  if (settings.tempValue > maxVal) {
-    settings.tempValue = maxVal;
-    el.tempValue.value = settings.tempValue;
-  }
 }
-// Hard block extra digit entry in temperature field (rather than only clamping afterwards)
+// Allow one optional decimal point; no length restriction now
 function limitTempInput() {
   if (!el.tempValue) return;
-  const maxLen = settings.units === "f" ? 3 : 2;
-  // Keep only digits
-  let raw = el.tempValue.value.replace(/\D+/g, "");
-  if (raw.length > maxLen) raw = raw.slice(0, maxLen);
+  let raw = el.tempValue.value
+    .replace(/,/g, ".") // support comma -> dot
+    .replace(/[^0-9.]/g, "");
+  // Keep only first decimal point
+  const firstDot = raw.indexOf(".");
+  if (firstDot !== -1) {
+    // remove subsequent dots
+    raw =
+      raw.slice(0, firstDot + 1) + raw.slice(firstDot + 1).replace(/\./g, "");
+  }
+  // Trim to one decimal place max visually (user can type more, we round)
+  const m = raw.match(/^(\d{1,4})(?:\.(\d{0,}))?/); // allow up to 4 integer digits for flexibility
+  if (m) {
+    let intPart = m[1];
+    let decPart = m[2] ?? "";
+    if (decPart.length > 1) decPart = decPart.slice(0, 1);
+    raw = decPart.length ? intPart + "." + decPart : intPart;
+  }
   el.tempValue.value = raw;
-  // Update setting (empty becomes 0 but we don't save 0 unless user actually typed it)
-  if (raw.length) {
-    const num = parseInt(raw, 10);
-    if (!isNaN(num)) {
-      settings.tempValue = num;
-      updateTime();
-    }
+  if (raw === "" || raw === ".") return; // incomplete input
+  const num = parseFloat(raw);
+  if (!isNaN(num)) {
+    settings.tempValue = num;
+    // Refresh only temperature related portion
+    if (settings.showTemp) updateTemperatureDisplay();
   }
 }
 function wireControls() {
@@ -581,8 +598,14 @@ function wireControls() {
   // Temperature controls
   el.showTemp?.addEventListener("change", () => {
     settings.showTemp = el.showTemp.checked;
-    updateTime();
-    applySeparatorMode();
+    if (settings.showTemp) {
+      updateTemperatureDisplay();
+    } else {
+      // clear temp specific state
+      el.clock?.removeAttribute("data-temp-dec");
+      applySeparatorMode();
+      updateTime();
+    }
   });
   el.tempValue?.addEventListener("input", () => {
     limitTempInput();
@@ -592,7 +615,8 @@ function wireControls() {
     enforceTempLimit();
     // Re-run limiter in case new unit reduces allowed length
     limitTempInput();
-    updateTime();
+    if (settings.showTemp) updateTemperatureDisplay();
+    else updateTime();
   });
   el.timeInput?.addEventListener("change", setManualTime);
   el.dateInput?.addEventListener("change", setManualDate);
@@ -641,13 +665,43 @@ function wireControls() {
     showToast(localeDict.toastAlarmSaved || "Alarm saved", "alarm");
   });
   document.getElementById("modesApply")?.addEventListener("click", () => {
-    updateTime();
+    if (settings.showTemp) updateTemperatureDisplay();
+    else updateTime();
     showToast(localeDict.toastModesApplied || "Modes applied", "modes");
   });
   document.getElementById("modesDefaults")?.addEventListener("click", () => {
     resetModesSection();
     flashButton(document.getElementById("modesDefaults"));
     showToast(localeDict.toastDefaults || "Defaults", "modes");
+  });
+  // Global Save / Cancel
+  document.getElementById("btnSaveAll")?.addEventListener("click", () => {
+    saveSettings();
+    showToast(localeDict.toastSaved || "Saved", "global");
+  });
+  document.getElementById("btnCancelAll")?.addEventListener("click", () => {
+    // Revert working copy to persisted state (reload from storage in case other tab changed)
+    const fresh = loadSettings();
+    settings = { ...fresh };
+    applySettingsToControls();
+    applyLighting();
+    applyTransition();
+    updateTime();
+    updateDate();
+    applySeparatorMode();
+    if (settings.showTemp) updateTemperatureDisplay();
+    showToast(localeDict.toastCancelled || "Cancelled", "global");
+  });
+  // Generic flash binding for all ghost buttons (adds .flash for 500ms)
+  const ghostBtns = document.querySelectorAll(".btn-ghost");
+  ghostBtns.forEach((btn) => {
+    if (btn._flashBound) return; // avoid double-binding
+    btn.addEventListener("click", () => {
+      btn.classList.add("flash");
+      clearTimeout(btn._flashTo);
+      btn._flashTo = setTimeout(() => btn.classList.remove("flash"), 500);
+    });
+    btn._flashBound = true;
   });
 }
 function tick() {
@@ -668,43 +722,70 @@ function start() {
   updateTime();
   updateDate();
   applySeparatorMode();
+  if (settings.showTemp) updateTemperatureDisplay();
   setInterval(tick, 1000);
 }
 document.addEventListener("DOMContentLoaded", start);
 
 function updateTemperatureDisplay() {
   if (!settings.showTemp) return;
-  const val = parseInt(settings.tempValue, 10);
-  if (isNaN(val)) return;
-  let digits = String(Math.abs(val));
-  if (digits.length > 3) digits = digits.slice(-3);
+  const raw = settings.tempValue;
+  if (raw === null || raw === undefined || raw === "") return;
+  const num = parseFloat(raw);
+  if (isNaN(num)) return;
+  // Format with one decimal (e.g., 22.5)
+  const formatted = num.toFixed(1); // always one decimal
+  // We need pattern: (a)(b)(c)(UNIT) across m1 m2 s1 s2 if 3 digit+decimal like 22.5 -> 2 2 . 5 C
+  // We'll treat the decimal point as occupying its own tube only visually by mapping '.' to empty + overlaying maybe? Simpler: embed without separate resource by omitting dot image and using minute2 for second digit, sec1 for decimal digit (no dot). Instead: Represent as: 22.5C => (2)(2)(5)(C) dropping the dot. But requirement explicitly shows '22.5C'. Need a dot. Approach: Use min2 for second digit, sec1 for decimal digit, and overlay a small dot via CSS pseudo inside sec1 if decimal present.
+  // Implementation: add data attribute on root with tempHasDecimal to trigger CSS to draw dot before sec1 digit.
+  const rootClock = el.clock;
+  rootClock?.setAttribute("data-temp-dec", "1");
   const unitImg = settings.units === "f" ? UNIT_F : UNIT_C;
-  // New layout: hours always blank, seconds last tube (sec2) shows unit (°C/°F), preceding tubes carry up to 3 digits
+  // Manage separators: first blank, second becomes decimal dot image
+  const seps = el.clock?.querySelectorAll(".separator");
+  if (seps && seps.length >= 2) {
+    seps[0].src = SEP_EMPTY;
+  }
+  // Clear hours
   if (el.h1) el.h1.src = DIGIT_EMPTY;
   if (el.h2) el.h2.src = DIGIT_EMPTY;
-  // Clear all target digit tubes first to avoid residue when digit count shrinks
+  // Reset all display tubes we'll use
   if (el.m1) el.m1.src = DIGIT_EMPTY;
   if (el.m2) el.m2.src = DIGIT_EMPTY;
   if (el.s1) el.s1.src = DIGIT_EMPTY;
-  if (el.s2) el.s2.src = unitImg; // unit always in last seconds lamp
-
-  // Map digits right-aligned before unit
-  // Possible digit placements (m1 m2 s1 [s2=UNIT]) for 1..3 digits:
-  // 1 digit:        [e][e][d][UNIT]
-  // 2 digits:       [e][d1][d2][UNIT]
-  // 3 digits (°F):  [d1][d2][d3][UNIT]
-  const arr = digits.split("");
-  if (arr.length === 1) {
-    if (el.s1) el.s1.src = digitSrc(arr[0]);
-  } else if (arr.length === 2) {
-    if (el.m2) el.m2.src = digitSrc(arr[0]);
-    if (el.s1) el.s1.src = digitSrc(arr[1]);
-  } else if (arr.length === 3) {
-    if (el.m1) el.m1.src = digitSrc(arr[0]);
-    if (el.m2) el.m2.src = digitSrc(arr[1]);
-    if (el.s1) el.s1.src = digitSrc(arr[2]);
+  if (el.s2) el.s2.src = unitImg;
+  // Extract parts
+  const [intPart, decPartFull] = formatted.split(".");
+  const decDigit = decPartFull ? decPartFull[0] : "0";
+  // Mapping logic depending on length of intPart
+  // Use right alignment: m1 m2 s1 s2
+  // Cases:
+  // 1.x => [e][d][dec][UNIT]
+  // 2.x => [d1][d2][dec][UNIT]
+  // 3.x => For Fahrenheit maybe 100.x -> need 3 int digits: show last three? We'll show first three across m1 m2 s1 and lose decimal (fallback) -> but requirement didn't mention >2 before decimal aside from example; keep simple.
+  if (intPart.length === 1) {
+    if (el.m2) el.m2.src = digitSrc(intPart[0]);
+    if (el.s1) el.s1.src = digitSrc(decDigit);
+  } else if (intPart.length === 2) {
+    if (el.m1) el.m1.src = digitSrc(intPart[0]);
+    if (el.m2) el.m2.src = digitSrc(intPart[1]);
+    if (el.s1) el.s1.src = digitSrc(decDigit);
+  } else {
+    // 3+ digits: drop decimal to preserve integer magnitude
+    rootClock?.removeAttribute("data-temp-dec");
+    const trimmed = intPart.slice(-3); // take last 3
+    if (el.m1) el.m1.src = digitSrc(trimmed[0]);
+    if (el.m2) el.m2.src = digitSrc(trimmed[1]);
+    if (el.s1) el.s1.src = digitSrc(trimmed[2]);
   }
-  // Ensure separators will be blank (handled elsewhere) - no extra action
+  // Apply decimal dot image only if we kept decimal
+  if (seps && seps.length >= 2) {
+    if (rootClock?.getAttribute("data-temp-dec") === "1") {
+      seps[1].src = SEP_DOT;
+    } else {
+      seps[1].src = SEP_EMPTY;
+    }
+  }
 }
 // ==== Section Reset Helpers & Toast ====
 function resetTimeDateSection() {
@@ -758,6 +839,13 @@ function showToast(msg, scope = "global", duration = 1800) {
   t.classList.add("show");
   clearTimeout(t._to);
   t._to = setTimeout(() => t.classList.remove("show"), duration);
+  if (!t._clickBound) {
+    t.addEventListener("click", () => {
+      t.classList.remove("show");
+      clearTimeout(t._to);
+    });
+    t._clickBound = true;
+  }
 }
 
 // Briefly flash a ghost button (Reset/Revert) for 500ms
