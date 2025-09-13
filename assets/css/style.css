@@ -74,7 +74,7 @@
     position: relative;
     width: var(--tube-width);
     height: calc(var(--tube-height) + 1.2vw);
-    background-image: url('/assets/img/clock/e.png');
+    background-image: url('../../assets/img/clock/e.png');
     background-position: top center;
     background-size: 100%;
     background-repeat: no-repeat;
@@ -83,7 +83,7 @@
 .nixie-tube-sep {
     position: relative;
     width: var(--separator-width);
-    background-image: url('/assets/img/clock/sep-e.png');
+    background-image: url('../../assets/img/clock/sep-e.png');
     background-position: bottom center;
     background-size: 100%;
     background-repeat: no-repeat;
@@ -628,8 +628,8 @@ body {
     --digit-alpha: 1;
     opacity: calc(var(--tube-opacity, 1) * var(--digit-alpha, 1));
     transition:
-    opacity var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease),
-    transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
+        opacity var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease),
+        transform var(--nixie-transition-duration, 300ms) var(--nixie-transition-ease);
 }
 
 :root[data-transition="none"] .nixie img:not(.separator) {
