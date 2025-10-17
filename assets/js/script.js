@@ -1,10 +1,10 @@
 // Clean minimal clock script - single implementation only
 // (If editing, ensure no legacy code appended below.)
 const DIGIT_PATH = "assets/img/clock/";
-const SEP_COLON = "assets/img/clock/sep-colon.png";
-const SEP_EMPTY = "assets/img/clock/sep-e.png"; // separator blank
-const SEP_DOT = "assets/img/clock/sep-dot.png"; // separator dot (for temperature decimal)
-const DIGIT_EMPTY = "assets/img/clock/e.png"; // digit (tube off)
+const SEP_COLON = "assets/img/clock/sep-colon.webp";
+const SEP_EMPTY = "assets/img/clock/sep-e.webp"; // separator blank
+const SEP_DOT = "assets/img/clock/sep-dot.webp"; // separator dot (for temperature decimal)
+const DIGIT_EMPTY = "assets/img/clock/e.webp"; // digit (tube off)
 const defaults = {
   is24h: true,
   leadingZero: true,
@@ -223,13 +223,13 @@ const el = {
   tempValue: $("#tempValue"),
   units: $("#units"),
 };
-const digitSrc = (d) => DIGIT_PATH + d + ".png";
-const UNIT_C = DIGIT_PATH + "celsium.png";
-const UNIT_F = DIGIT_PATH + "farenheit.png";
+const digitSrc = (d) => DIGIT_PATH + d + ".webp";
+const UNIT_C = DIGIT_PATH + "celsium.webp";
+const UNIT_F = DIGIT_PATH + "farenheit.webp";
 function setDigit(img, d, animate = true) {
   if (!img) return;
   const newSrc = digitSrc(d);
-  if (img.src.endsWith("/" + d + ".png")) {
+  if (img.src.endsWith("/" + d + ".webp")) {
     img.dataset.prevDigit = d; // ensure stored
     return;
   }
@@ -348,7 +348,7 @@ function applySecondsVisibility() {
     return;
   }
   // If previously temperature with decimal, might have left dot image in second separator
-  if (seps && seps[1] && seps[1].src.endsWith("sep-dot.png")) {
+  if (seps && seps[1] && seps[1].src.endsWith("sep-dot.webp")) {
     seps[1].src = SEP_EMPTY;
   }
   if (settings.showSeconds) {

@@ -74,7 +74,7 @@
     position: relative;
     width: var(--tube-width);
     height: calc(var(--tube-height) + 1.2vw);
-    background-image: url('../../assets/img/clock/e.png');
+    background-image: url('../../assets/img/clock/e.webp');
     background-position: top center;
     background-size: 100%;
     background-repeat: no-repeat;
@@ -83,7 +83,7 @@
 .nixie-tube-sep {
     position: relative;
     width: var(--separator-width);
-    background-image: url('../../assets/img/clock/sep-e.png');
+    background-image: url('../../assets/img/clock/sep-e.webp');
     background-position: bottom center;
     background-size: 100%;
     background-repeat: no-repeat;

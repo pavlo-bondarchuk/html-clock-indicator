@@ -10,7 +10,7 @@ Single‑page (static) web app simulating a Nixie‑style indicator clock render
 - Date: automatic display, formats `DD-MM-YYYY` / `MM-DD-YYYY`, manual time & date override with reset.
 - Time zone + DST (daylight saving) adjustment.
 - Temperature: one decimal place (e.g. `22.5C` / `75.5F`), input sanitising & range enforcement. Supports °C and °F.
-- Decimal logic: first separator (between hours & minutes) off, second shows `sep-dot.png` if a fractional part exists; for 3+ integer digits (e.g. 100.x) the fraction is dropped.
+- Decimal logic: first separator (between hours & minutes) off, second shows `sep-dot.webp` if a fractional part exists; for 3+ integer digits (e.g. 100.x) the fraction is dropped.
 - Lighting: brightness, glow intensity, LED/accent color, transition style & speed.
 - Modes section: quick toggles (e.g. show temperature) + defaults restore.
 - Themes (dark / light) + remembered custom accent color.
@@ -27,13 +27,13 @@ html-clock-indicator/
   assets/
     css/style.css         # Styles (cards, themes, animations, flash, toast)
     js/script.js          # Clock logic, state, persistence, i18n, rendering
-    img/clock/            # Digits 0-9, units (celsium.png, farenheit.png), separators
-      0.png .. 9.png
-      sep-colon.png       # Colon
-      sep-dot.png         # Decimal dot (temperature)
-      sep-e.png           # Empty separator
-      celsium.png         # °C indicator
-      farenheit.png       # °F indicator
+  img/clock/            # Digits 0-9, units (celsium.webp, farenheit.webp), separators
+  0.webp .. 9.webp
+  sep-colon.webp      # Colon
+  sep-dot.webp        # Decimal dot (temperature)
+  sep-e.webp          # Empty separator
+  celsium.webp        # °C indicator
+  farenheit.webp      # °F indicator
     font/                 # UI webfont
   locales/
     en.json               # English locale
@@ -111,7 +111,7 @@ Add a new language:
 - Always formatted to one decimal (`toFixed(1)`).
 - If integer part length > 2 the fraction is dropped (3 digits + unit fit only).
 - Blinking separators stop while showing temperature.
-- `sep-dot.png` used solely as the decimal point in the second separator.
+- `sep-dot.webp` used solely as the decimal point in the second separator.
 
 ## State Storage
 
