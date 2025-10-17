@@ -13,3 +13,4 @@
 # IDE settings
 .vscode/
 .idea/
+assets/.DS_Store
